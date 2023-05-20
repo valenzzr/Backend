@@ -3,10 +3,14 @@ from django.db import models
 
 # Create your models here.
 
+class aaa(models.Model):
+    nn = models.CharField(max_length=3)
+
 
 class Passenger(models.Model):
+    nn = models.CharField(max_length=12)
     name = models.CharField(max_length=20, default="")
-    email = models.CharField(max_length=30)
+    email = models.EmailField()
     phone_number = models.CharField(max_length=20)
     identification = models.CharField(max_length=20, primary_key=True, default="")
     username = models.CharField(max_length=20)
