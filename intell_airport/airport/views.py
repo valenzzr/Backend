@@ -1,7 +1,6 @@
 from django.shortcuts import render
-from .models import *
 from django.http import *
-
+from airport.models import Passenger
 # Create your views here.
 
 
@@ -25,3 +24,7 @@ def register(request):
             '恭喜您，注册成功！'
         })
 
+
+# # 旅客登录功能
+# def login(request):
+#     if request.method == 'POST':

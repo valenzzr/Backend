@@ -6,7 +6,7 @@ import sys
 
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "智慧机场.settings")
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "intell_airport.settings")
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

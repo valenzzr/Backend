@@ -6,5 +6,4 @@ app_name = 'airport'
 
 urlpatterns = [
     path('register/', views.register),
-    path('login/', views.login),
 ]
