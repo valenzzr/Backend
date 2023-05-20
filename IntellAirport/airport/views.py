@@ -34,7 +34,7 @@ def register(request):
         # password2 = data.get('password2')
         # print(name, email, phone_number, identification, username, password)
 
-    if Passenger.objects.filter(username=username).exists():
+    if Passenger.objects.filter(identification=identification).exists():
         return JsonResponse({
             'message': '该用户已注册，请勿重复注册！'
         })
