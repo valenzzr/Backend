@@ -5,10 +5,10 @@ from django.db import models
 
 
 class Passenger(models.Model):
-    name = models.CharField(max_length=20)
+    name = models.CharField(max_length=20, default="")
     email = models.CharField(max_length=30)
     phone_number = models.CharField(max_length=20)
-    identification = models.CharField(max_length=20, primary_key=True, default='')
+    identification = models.CharField(max_length=20, primary_key=True, default="")
     username = models.CharField(max_length=20)
     password = models.CharField(max_length=20)
 
