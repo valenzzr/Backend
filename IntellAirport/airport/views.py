@@ -1,5 +1,6 @@
 import json
 import time
+import datetime
 
 import jwt
 from django.db import IntegrityError
@@ -10,8 +11,25 @@ from django.views import View
 from django.conf import settings
 import hashlib
 
+from airport.models import Flight
+
+from airport.models import Terminal
+
+from airport.models import Runway
+
+from airport.models import Gate
 
 # Create your views here.
+flight_arr = []
+
+
+def save_flight(flight):
+    flight_arr.append(flight)
+
+
+def print_flight():
+    for flight in flight_arr:
+        print(flight)
 
 
 # 旅客注册功能
@@ -88,9 +106,83 @@ class LoginViews(View):
         })
 
 
+class AddFlightViews(View):
+
+    def check_flight_availability(self,flight_number, departure_datetime, runway):
+        departure_datetime1 = datetime.datetime.strptime(departure_datetime, "%Y-%m-%d %H:%M:%S")
+        thirty_minutes = datetime.timedelta(minutes=30)
+        min_datetime = departure_datetime1 - thirty_minutes
+        max_datetime = departure_datetime1 + thirty_minutes
+
+        existing_flights = Flight.objects.filter(
+            runway=runway,
+            departure_datetime__range=(min_datetime, max_datetime)
+        )
+
+        if existing_flights.exists():
+            return False
+
+        return True
+
+    def post(self, request):
+        json_str = request.body
+        data = json.loads(json_str)
+        flight_number = data.get('flight_number')
+        departure_datetime = data.get('departure_datetime')
+        arrival_datetime = data.get('arrival_datetime')
+        price = data.get('price')
+        terminal = data.get('terminal')
+        gate = data.get('gate')
+        runway = data.get('runway')
+        status = 'waitForAdd'  # 该航班尚未被管理员添加
+        old_flight = Flight.objects.filter(flight_number=flight_number)
+        if old_flight:
+            return JsonResponse({
+                'code': 10300, 'error': '航班已存在'
+            })
+        if departure_datetime > arrival_datetime:
+            return JsonResponse({
+                'code': 10301, 'error': '错误的出发和到达时间'
+            })
+        old_terminal = Terminal.objects.filter(terminal_number=terminal)
+        old_runway = Runway.objects.filter(runway_number=runway)
+        old_gate = Gate.objects.filter(gate_number=gate)
+        if not old_terminal:
+            return JsonResponse({
+                'code': 10302, 'error': '不存在该航站楼'
+            })
+        if not old_gate:
+            return JsonResponse({
+                'code': 10303, 'error': '不存在该登机口'
+            })
+        if not old_runway:
+            return JsonResponse({
+                'code': 10305, 'error': '不存在该跑道'
+            })
+        need_terminal = Terminal.objects.get(terminal_number=terminal)
+        need_runway = Runway.objects.get(runway_number=runway)
+        need_gate = Gate.objects.get(gate_number=gate)
+        if not self.check_flight_availability(flight_number, departure_datetime, runway):
+            return JsonResponse({
+                'code': 10305, 'error': '该航班所处的跑道前后三十分钟有其他飞机起飞！'
+            })
+        try:
+            flight = Flight.objects.create(flight_number=flight_number, departure_datetime=departure_datetime, arrival_datetime= arrival_datetime, price= price,
+                                  status= status,terminal= need_terminal ,gate= need_gate,runway= need_runway)
+            save_flight(flight)
+            return JsonResponse({
+                'message': '恭喜您，添加成功！'
+            })
+        except IntegrityError as e:
+            return JsonResponse({'message': str(e)})
+        finally:
+            print_flight()
+
+
 # 生成登录令牌用于记录会话状态
 def make_token(username, expire=3600 * 24):
     key = settings.JWT_TOKEN_KEY
     now_time = time.time()
     payload_data = {'username': username, 'exp': now_time + expire}
     return jwt.encode(payload_data, key, algorithm='HS256')
+
