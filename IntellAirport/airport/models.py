@@ -1,7 +1,11 @@
 from django.db import models
 
-
 # Create your models here.
+import random
+
+
+def generate_random_number():
+    return str(random.randint(100000000, 999999999))
 
 
 class Passenger(models.Model):
@@ -77,6 +81,7 @@ class Staff(models.Model):
 
 
 class Flight(models.Model):
+    airline_name = models.ForeignKey(Airline, on_delete=models.CASCADE, to_field='name')
     flight_number = models.CharField(max_length=20, primary_key=True)
     departure_datetime = models.DateTimeField()
     arrival_datetime = models.DateTimeField()
@@ -127,7 +132,8 @@ class Runway(models.Model):
 
 
 class Ticket(models.Model):
-    ticket_number = models.CharField(max_length=20, primary_key=True)
+    airline_name = models.ForeignKey(Airline, on_delete=models.CASCADE, to_field='name')
+    ticket_number_random = models.CharField(max_length=20, primary_key=True, default=generate_random_number)
     status = models.CharField(max_length=20)
     departure_datetime = models.DateTimeField()
     arrival_datetime = models.DateTimeField()
