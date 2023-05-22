@@ -127,10 +127,13 @@ class Runway(models.Model):
 
 
 class Ticket(models.Model):
-    ticket_number = models.CharField(max_length=20)
+    ticket_number = models.CharField(max_length=20, primary_key=True)
     status = models.CharField(max_length=20)
     departure_datetime = models.DateTimeField()
     arrival_datetime = models.DateTimeField()
     terminal = models.ForeignKey(Terminal, on_delete=models.CASCADE, to_field='terminal_number')
     gate = models.ForeignKey(Gate, on_delete=models.CASCADE, to_field='gate_number')
     passenger = models.ForeignKey(Passenger, on_delete=models.CASCADE, to_field='identification')
+
+    class Meta:
+        db_table = 'Ticket'
