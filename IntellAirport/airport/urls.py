@@ -11,4 +11,5 @@ urlpatterns = [
     path('addflight/', AddFlightViews.as_view()),
     path('buyticket/', BuyTicketsViews.as_view()),
     path('searchinformation/', SearchInformationViews.as_view()),
+    path('searchticket/', SearchTicketViews.as_view()),
 ]
