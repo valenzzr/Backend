@@ -13,8 +13,6 @@ from django.utils.decorators import method_decorator
 from tools.Login_dec import logging_check
 import hashlib
 
-
-
 # Create your views here.
 flight_arr = []
 
@@ -73,6 +71,7 @@ class RegisterViews(View):
 # 旅客登录功能
 
 class LoginViews(View):
+    @method_decorator(logging_check)
     def post(self, request):
         json_str = request.body
         data = json.loads(json_str)
@@ -102,16 +101,49 @@ class LoginViews(View):
         })
 
 
+# 更新用户信息
 class UpdateInfoViews(View):
+    @method_decorator(logging_check)
     def put(self, request):
         json_str = request.body
         data = json.loads(json_str)
-        user = request.nowuser
+        user = request.myuser
+
+        phone_number = data.get('phone_number')
+        email = data.get('email')
+        password = data.get('password')
+        if phone_number:
+            user.phone_number = phone_number
+        if email:
+            user.email = email
+        if password:
+            user.password = password
+        user.save()
+        return JsonResponse({
+            'code': 200, 'message': '修改个人信息成功'
+        })
+
+
+@logging_check
+def UploadImage(request):
+    if request.method != 'POST':
+        return JsonResponse({
+            'code': 10103, 'error': 'Please use POST'
+        })
+
+    user = request.myuser
+
+    avatar = request.FILES['avatar']
+    user.avatar = avatar
+    user.save()
+    return JsonResponse({
+        'code': 200, 'message': '上传头像成功'
+    })
 
 
 class AddFlightViews(View):  # 添加航班信息
 
-    def check_flight_availability(self,flight_number, departure_datetime, runway):  # 判断起飞前后30min是否存在其他飞机起飞
+    def check_flight_availability(self, flight_number, departure_datetime, runway):  # 判断起飞前后30min是否存在其他飞机起飞
         departure_datetime1 = datetime.datetime.strptime(departure_datetime, "%Y-%m-%d %H:%M:%S")
         thirty_minutes = datetime.timedelta(minutes=30)
         min_datetime = departure_datetime1 - thirty_minutes
@@ -179,8 +211,11 @@ class AddFlightViews(View):  # 添加航班信息
         need_runway = Runway.objects.get(runway_number=runway)
         need_airline = Airline.objects.get(name=airline_name)
         try:
-            flight = Flight.objects.create(flight_number=flight_number, departure_datetime=departure_datetime, arrival_datetime= arrival_datetime, price= price,
-                                  status= status,origin= origin,destination= destination,airline_name=need_airline,terminal= need_terminal,gate= need_gate,runway= need_runway)
+            flight = Flight.objects.create(flight_number=flight_number, departure_datetime=departure_datetime,
+                                           arrival_datetime=arrival_datetime, price=price,
+                                           status=status, origin=origin, destination=destination,
+                                           airline_name=need_airline, terminal=need_terminal, gate=need_gate,
+                                           runway=need_runway)
             save_flight(flight)
             return JsonResponse({
                 'message': '恭喜您，添加成功！'
@@ -191,13 +226,55 @@ class AddFlightViews(View):  # 添加航班信息
             print_flight()
 
 
+# 删除航班信息
+class DeleteFlightViews(View):
+    def delete(self, request):
+        json_str = request.body
+        data = json.loads(json_str)
+        flight_number = data.get('flight_number')
+
+        try:
+            flight = Flight.objects.get(flight_number=flight_number)
+        except Exception as e:
+            return JsonResponse({
+                'code': 10307, 'error': '删除航班信息失败'
+            })
+
+        flight.delete()
+        return JsonResponse({
+            'code': 200, 'message': '删除航班信息成功'
+        })
+
+
+# 调整航班价格
+class UpdateFlightPriceViews(View):
+    def put(self, request):
+        json_str = request.body
+        data = json.loads(json_str)
+        flight_number = data.get('flight_number')
+        price = data.get('price')
+
+        try:
+            flight = Flight.objects.get(flight_number=flight_number)
+        except Exception as e:
+            return JsonResponse({
+                'code': 10308, 'error': '更新航班价格'
+            })
+
+        flight.price = price
+        flight.save()
+        return JsonResponse({
+            'code': 200, 'message': '调整航班价格成功'
+        })
+
+
 class BuyTicketsViews(View):
-    def post(self,request):
+    def post(self, request):
         json_str = request.body
         data = json.loads(json_str)
         flight_number = data.get('flight_number')
         try:
-            old_flight = Flight.objects.get(flight_number = flight_number)
+            old_flight = Flight.objects.get(flight_number=flight_number)
         except Exception as e:
             return JsonResponse({
                 'code': 10401, 'error': '不存在该航班，请重新选择'
@@ -212,14 +289,16 @@ class BuyTicketsViews(View):
         gate = old_flight.gate
         identification = data.get('identification')
         try:
-            old_passenger = Passenger.objects.get(identification = identification)
+            old_passenger = Passenger.objects.get(identification=identification)
         except Exception as e:
             return JsonResponse({
                 'code': 10402, 'error': '不存在该旅客，是否已注册？'
             })
         try:
-            ticket = Ticket.objects.create(passenger = old_passenger, departure_datetime=departure_datetime, arrival_datetime= arrival_datetime,
-                                  destination= destination,origin= origin,status= status,airline_name=airline_name,terminal= terminal,gate= gate)
+            ticket = Ticket.objects.create(passenger=old_passenger, departure_datetime=departure_datetime,
+                                           arrival_datetime=arrival_datetime,
+                                           destination=destination, origin=origin, status=status,
+                                           airline_name=airline_name, terminal=terminal, gate=gate)
             ticket.save()
             return JsonResponse({'message': '购票成功，请支付'})
         except Exception as e:
@@ -230,7 +309,7 @@ class BuyTicketsViews(View):
 
 
 class SearchInformationViews(View):
-    def post(self,request):
+    def post(self, request):
         json_str = request.body
         data = json.loads(json_str)
         origin = data.get('origin')
@@ -239,9 +318,12 @@ class SearchInformationViews(View):
         dict1 = {}
         for i in flight_list:
             if i.departure_datetime > datetime.datetime.now():  # 如果航班现在没有起飞，则传回该航班
-                dict1[i.flight_number] = {'flight_number':i.flight_number,'airline_name':i.airline_name.name,'origin':i.origin,'destination':i.destination,
-                                      'departure_datetime':i.departure_datetime,'arrival_datetime':i.arrival_datetime,
-                                      'price':i.price,'terminal':i.terminal.terminal_number,'gate':i.gate.gate_number,'runway':i.runway.runway_number}
+                dict1[i.flight_number] = {'flight_number': i.flight_number, 'airline_name': i.airline_name.name,
+                                          'origin': i.origin, 'destination': i.destination,
+                                          'departure_datetime': i.departure_datetime,
+                                          'arrival_datetime': i.arrival_datetime,
+                                          'price': i.price, 'terminal': i.terminal.terminal_number,
+                                          'gate': i.gate.gate_number, 'runway': i.runway.runway_number}
 
         return JsonResponse(dict1)
 
@@ -259,4 +341,3 @@ def make_token(username, expire=3600 * 24):
     now_time = time.time()
     payload_data = {'username': username, 'exp': now_time + expire}
     return jwt.encode(payload_data, key, algorithm='HS256')
-

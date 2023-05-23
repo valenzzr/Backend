@@ -22,7 +22,7 @@ def logging_check(func):
 
         username = res['username']
         user = Passenger.objects.get(username=username)
-        request.nowuser = user
+        request.myuser = user
         return func(request, *args, **kwargs)
 
     return wrap
