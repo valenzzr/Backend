@@ -81,6 +81,8 @@ class Staff(models.Model):
 
 
 class Flight(models.Model):
+    origin = models.CharField(max_length=20)
+    destination = models.CharField(max_length=20)
     airline_name = models.ForeignKey('Airline', on_delete=models.CASCADE, to_field='name')
     flight_number = models.CharField(max_length=20, primary_key=True)
     departure_datetime = models.DateTimeField()
@@ -132,6 +134,8 @@ class Runway(models.Model):
 
 
 class Ticket(models.Model):
+    origin = models.CharField(max_length=20)
+    destination = models.CharField(max_length=20)
     airline_name = models.ForeignKey(Airline, on_delete=models.CASCADE, to_field='name')
     ticket_number_random = models.CharField(max_length=20, primary_key=True, default=generate_random_number)
     status = models.CharField(max_length=20)
