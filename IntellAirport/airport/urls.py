@@ -9,4 +9,5 @@ urlpatterns = [
     path('register/', RegisterViews.as_view()),
     path('login/', LoginViews.as_view()),
     path('addflight/', AddFlightViews.as_view()),
+    path('buyticket/', BuyTicketsViews.as_view()),
 ]

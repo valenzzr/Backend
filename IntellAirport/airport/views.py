@@ -13,6 +13,10 @@ from django.utils.decorators import method_decorator
 from tools.Login_dec import logging_check
 import hashlib
 
+from airport.models import Airline
+
+from airport.models import Ticket
+
 # Create your views here.
 flight_arr = []
 
@@ -128,7 +132,8 @@ class AddFlightViews(View):
     def post(self, request):
         json_str = request.body
         data = json.loads(json_str)
-        flight_number = data.get('flight_number')
+        flight_number = data.get("flight_number")
+        airline_name = data.get('airline_name')
         departure_datetime = data.get('departure_datetime')
         arrival_datetime = data.get('arrival_datetime')
         price = data.get('price')
@@ -148,6 +153,7 @@ class AddFlightViews(View):
         old_terminal = Terminal.objects.filter(terminal_number=terminal)
         old_runway = Runway.objects.filter(runway_number=runway)
         old_gate = Gate.objects.filter(gate_number=gate)
+        old_airline = Airline.objects.filter(name=airline_name)
         if not old_terminal:
             return JsonResponse({
                 'code': 10302, 'error': '不存在该航站楼'
@@ -160,16 +166,21 @@ class AddFlightViews(View):
             return JsonResponse({
                 'code': 10305, 'error': '不存在该跑道'
             })
-        need_terminal = Terminal.objects.get(terminal_number=terminal)
-        need_runway = Runway.objects.get(runway_number=runway)
-        need_gate = Gate.objects.get(gate_number=gate)
+        if not old_airline:
+            return JsonResponse({
+                'code': 10306, 'error': '不存在该航司'
+            })
         if not self.check_flight_availability(flight_number, departure_datetime, runway):
             return JsonResponse({
                 'code': 10305, 'error': '该航班所处的跑道前后三十分钟有其他飞机起飞！'
             })
+        need_terminal = Terminal.objects.get(terminal_number=terminal)
+        need_gate = Gate.objects.get(gate_number=gate)
+        need_runway = Runway.objects.get(runway_number=runway)
+        need_airline = Airline.objects.get(name=airline_name)
         try:
             flight = Flight.objects.create(flight_number=flight_number, departure_datetime=departure_datetime, arrival_datetime= arrival_datetime, price= price,
-                                  status= status,terminal= need_terminal ,gate= need_gate,runway= need_runway)
+                                  status= status,airline_name=need_airline,terminal= need_terminal,gate= need_gate,runway= need_runway)
             save_flight(flight)
             return JsonResponse({
                 'message': '恭喜您，添加成功！'
@@ -178,6 +189,42 @@ class AddFlightViews(View):
             return JsonResponse({'message': str(e)})
         finally:
             print_flight()
+
+
+class BuyTicketsViews(View):
+    def post(self,request):
+        json_str = request.body
+        data = json.loads(json_str)
+        flight_number = data.get('flight_number')
+        try:
+            old_flight = Flight.objects.get(flight_number = flight_number)
+        except Exception as e:
+            return JsonResponse({
+                'code': 10401, 'error': '不存在该航班，请重新选择'
+            })
+        departure_datetime = old_flight.departure_datetime
+        arrival_datetime = old_flight.arrival_datetime
+        status = "unpaying"
+        airline_name = old_flight.airline_name
+        terminal = old_flight.terminal
+        gate = old_flight.gate
+        identification = data.get('identification')
+        try:
+            old_passenger = Passenger.objects.get(identification = identification)
+        except Exception as e:
+            return JsonResponse({
+                'code': 10402, 'error': '不存在该旅客，是否已注册？'
+            })
+        try:
+            ticket = Ticket.objects.create(passenger = old_passenger, departure_datetime=departure_datetime, arrival_datetime= arrival_datetime,
+                                  status= status,airline_name=airline_name,terminal= terminal,gate= gate)
+            ticket.save()
+            return JsonResponse({'message': '购票成功，请支付'})
+        except Exception as e:
+            return JsonResponse({
+                'message': str(e)
+            })
+        # TODO：后面实现支付功能，并将状态改为已支付，支付失败则删除信息
 
 
 # 生成登录令牌用于记录会话状态
