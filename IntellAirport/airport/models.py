@@ -81,7 +81,7 @@ class Staff(models.Model):
 
 
 class Flight(models.Model):
-    airline_name = models.ForeignKey(Airline, on_delete=models.CASCADE, to_field='name')
+    airline_name = models.ForeignKey('Airline', on_delete=models.CASCADE, to_field='name')
     flight_number = models.CharField(max_length=20, primary_key=True)
     departure_datetime = models.DateTimeField()
     arrival_datetime = models.DateTimeField()
