@@ -13,9 +13,7 @@ from django.utils.decorators import method_decorator
 from tools.Login_dec import logging_check
 import hashlib
 
-from airport.models import Airline
 
-from airport.models import Ticket
 
 # Create your views here.
 flight_arr = []
@@ -225,6 +223,13 @@ class BuyTicketsViews(View):
                 'message': str(e)
             })
         # TODO：后面实现支付功能，并将状态改为已支付，支付失败则删除信息
+
+
+class SearchInformationViews(View):
+    def get(self,request):
+        json_str = request.body
+        data = json.loads(json_str)
+
 
 
 # 生成登录令牌用于记录会话状态
