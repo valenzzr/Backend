@@ -143,8 +143,13 @@ def UploadImage(request):
 
 class AddFlightViews(View):  # 添加航班信息
 
-    def check_flight_availability(self, flight_number, departure_datetime, runway):  # 判断起飞前后30min是否存在其他飞机起飞
+    def check_flight_availability(self,flight_number, departure_datetime, arrive_datetime,runway):  # 判断起飞降落时间是否合法
         departure_datetime1 = datetime.datetime.strptime(departure_datetime, "%Y-%m-%d %H:%M:%S")
+        arrival_datetime2 = datetime.datetime.strptime(arrive_datetime,"%Y-%m-%d %H:%M:%S")
+        if arrival_datetime2 < departure_datetime1:
+            return False
+        if arrival_datetime2 < datetime.datetime.now() or departure_datetime1 <datetime.datetime.now():
+            return False
         thirty_minutes = datetime.timedelta(minutes=30)
         min_datetime = departure_datetime1 - thirty_minutes
         max_datetime = departure_datetime1 + thirty_minutes
@@ -178,10 +183,6 @@ class AddFlightViews(View):  # 添加航班信息
             return JsonResponse({
                 'code': 10300, 'error': '航班已存在'
             })
-        if departure_datetime > arrival_datetime:
-            return JsonResponse({
-                'code': 10301, 'error': '错误的出发和到达时间'
-            })
         old_terminal = Terminal.objects.filter(terminal_number=terminal)
         old_runway = Runway.objects.filter(runway_number=runway)
         old_gate = Gate.objects.filter(gate_number=gate)
@@ -202,9 +203,9 @@ class AddFlightViews(View):  # 添加航班信息
             return JsonResponse({
                 'code': 10306, 'error': '不存在该航司'
             })
-        if not self.check_flight_availability(flight_number, departure_datetime, runway):
+        if not self.check_flight_availability(flight_number, departure_datetime,arrival_datetime, runway):
             return JsonResponse({
-                'code': 10305, 'error': '该航班所处的跑道前后三十分钟有其他飞机起飞！'
+                'code': 10305, 'error': '航班时间设置存在问题，请检查是否航班时间已过、起飞时间晚于降落时间或在同一跑道上前后30min有其他航班起飞'
             })
         need_terminal = Terminal.objects.get(terminal_number=terminal)
         need_gate = Gate.objects.get(gate_number=gate)
@@ -333,6 +334,73 @@ class SearchTicketViews(View):
         json_str = request.body
         data = json.loads(json_str)
         identification = data.get('identification')
+        try:
+            passenger = Passenger.objects.get(identification=identification)
+        except Exception as e:
+            return JsonResponse({
+                'code': '10501',
+                'error': '不存在该旅客'
+            })
+        ticket_list = Ticket.objects.filter(passenger = passenger)
+        dict1 = {}
+        for i in ticket_list:
+            if i.departure_datetime > datetime.datetime.now():  # 如果航班现在没有起飞，则返回该机票
+                dict1[i.ticket_number_random] = {
+                    'ticket_number_random': i.ticket_number_random,
+                    'origin': i.origin,
+                    'destination': i.destination,
+                    'airline_name': i.airline_name.name,
+                    'departure_datetime': i.departure_datetime,
+                    'arrival_datetime': i.arrival_datetime,
+                    'terminal': i.terminal.terminal_number,
+                    'gate': i.gate.gate_number,
+                    'passenger': i.passenger.identification,
+                    'name': i.passenger.name
+                }
+        return JsonResponse(dict1)
+
+
+class AddLuggageViews(View):
+    def convert_weight_string(self,weight_string):
+        try:
+            weight = float(weight_string)
+            # 限制小数位数为2位，可根据需求进行调整
+            formatted_weight = round(weight, 2)
+            return formatted_weight
+        except ValueError:
+            return None
+
+    def post(self, request):
+        json_str = request.body
+        data = json.loads(json_str)
+        luggage_number = data.get('luggage_number')
+        weight = self.convert_weight_string(data.get('weight'))
+        print(weight)
+        if weight > 10.00:
+            return JsonResponse({
+                'code': '10502',
+                'error': '行李超重'
+            })
+        status = '等待运送'
+        position = 'Airport'
+        identification = data.get('identification')
+        try:
+            passenger = Passenger.objects.get(identification=identification)
+        except Exception as e:
+            return JsonResponse({
+                'code': '10501',
+                'error': '不存在该旅客'
+            })
+        try:
+            luggage = Luggage.objects.create(luggage_number= luggage_number,weight=weight,position=position,status =status,passenger= passenger)
+            luggage.save()
+            return JsonResponse({
+                'message': '添加成功'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'message': str(e)
+            })
 
 
 # 生成登录令牌用于记录会话状态
