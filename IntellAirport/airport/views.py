@@ -6,18 +6,12 @@ import jwt
 from django.db import IntegrityError
 from django.shortcuts import render
 from django.http import *
-from airport.models import Passenger
+from airport.models import *
 from django.views import View
 from django.conf import settings
+from django.utils.decorators import method_decorator
+from tools.Login_dec import logging_check
 import hashlib
-
-from airport.models import Flight
-
-from airport.models import Terminal
-
-from airport.models import Runway
-
-from airport.models import Gate
 
 # Create your views here.
 flight_arr = []
@@ -104,6 +98,13 @@ class LoginViews(View):
         return JsonResponse({
             'message': '登陆成功', 'username': username, 'data': {'token': token}
         })
+
+
+class UpdateInfoViews(View):
+    def put(self, request):
+        json_str = request.body
+        data = json.loads(json_str)
+        user = request.nowuser
 
 
 class AddFlightViews(View):
