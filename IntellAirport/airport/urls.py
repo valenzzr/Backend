@@ -20,4 +20,6 @@ urlpatterns = [
     path('buyticket/', BuyTicketsViews.as_view()),
     path('searchinformation/', SearchInformationViews.as_view()),
     path('searchticket/', SearchTicketViews.as_view()),
+    # 127.0.0.1:8000/api/addLuggage 添加行李
+    path('addLuggage/',AddLuggageViews.as_view()),
 ]
