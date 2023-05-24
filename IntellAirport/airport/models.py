@@ -149,3 +149,13 @@ class Ticket(models.Model):
 
     class Meta:
         db_table = 'Ticket'
+
+
+class Device(models.Model):
+    dev_id = models.CharField(max_length=20)
+    dev_name = models.CharField(max_length=20)
+    image = models.ImageField(upload_to='devices', null=True)
+    status = models.CharField(max_length=20)
+
+    class Meta:
+        db_table = 'Device'

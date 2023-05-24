@@ -12,6 +12,7 @@ from django.views import View
 from django.conf import settings
 from django.utils.decorators import method_decorator
 from tools.Login_dec import logging_check
+from .tasks import send_email_celery
 import hashlib
 
 # Create your views here.
@@ -37,7 +38,11 @@ def send_email(request):
     # 收件人，可以是多个，以列表的形式存储
     recipient_list = ["152xxxx7756@sina.cn", "iino-miko@outlook.com", ]
     send_mail(subject=subject, from_email=from_email, recipient_list=recipient_list, message=message)
-    return HttpResponse("Send email success")
+    return JsonResponse({
+        'code': 200,
+        'message': '邮件发送成功!'
+    })
+    # return HttpResponse("Send email success")
 
 
 def save_flight(flight):
@@ -84,7 +89,9 @@ class RegisterViews(View):
                                                  identification=identification, username=username,
                                                  password=p_m.hexdigest())
             passenger.save()
-            send_email(request)
+            subject = '注册成功邮件提示'
+            message = '感谢您的注册，您已注册成功!',
+            send_email_celery.delay(request, email, subject, message)
             return JsonResponse({
                 'message': '恭喜您，注册成功！'
             })
@@ -338,7 +345,8 @@ class BuyTicketsViews(View):
         # TODO：后面实现支付功能，并将状态改为已支付，支付失败则删除信息
 
 
-class SearchInformationViews(View):
+# 查询航班信息
+class SearchFlightInfoViews(View):
     def post(self, request):
         json_str = request.body
         data = json.loads(json_str)
@@ -358,6 +366,7 @@ class SearchInformationViews(View):
         return JsonResponse(dict1)
 
 
+# 查询订票信息，并生成电子机票
 class SearchTicketViews(View):
     def post(self, request):
         json_str = request.body
