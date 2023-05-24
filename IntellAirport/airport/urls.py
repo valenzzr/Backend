@@ -17,6 +17,8 @@ urlpatterns = [
     # 127.0.0.1:8000/api/updatePrice 更新航班价格
     path('updatePrice/', UpdateFlightPriceViews.as_view()),
 
+    path('checkToken/', CheckToken.as_view()),
+
     path('buyticket/', BuyTicketsViews.as_view()),
     path('searchinformation/', SearchInformationViews.as_view()),
     path('searchticket/', SearchTicketViews.as_view()),

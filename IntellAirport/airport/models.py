@@ -23,7 +23,7 @@ class Passenger(models.Model):
 
 
 class Luggage(models.Model):
-    luggage_number = models.CharField(max_length=20)
+    luggage_number = models.CharField(max_length=20, primary_key=True)
     weight = models.DecimalField(max_digits=3, decimal_places=2)
     status = models.CharField(max_length=20)
     position = models.CharField(max_length=20)
@@ -34,10 +34,12 @@ class Luggage(models.Model):
 
 
 class Parking(models.Model):
-    parking_number = models.CharField(max_length=20)
+    parking_number = models.CharField(max_length=20, primary_key=True)
     status = models.CharField(max_length=20)
     passenger = models.ForeignKey(Passenger, on_delete=models.CASCADE, to_field='identification')
-    duration = models.DecimalField(max_digits=5, decimal_places=2)
+    duration = models.DateTimeField()
+    start_time = models.DateTimeField(auto_now_add=True)  # 开始时间，创建时更新
+    end_time = models.DateTimeField(auto_now=True)  # 结束时间，最后一次修改表时更新
 
     class Meta:
         db_table = 'Parking'

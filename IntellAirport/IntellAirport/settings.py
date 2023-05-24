@@ -150,3 +150,17 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 JWT_TOKEN_KEY = '123456'
+
+# 发送邮件配置
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# smpt服务地址
+EMAIL_HOST = 'smtp.qq.com'
+EMAIL_PORT = 25  # 端口默认都是25不需要修改
+# 发送邮件的邮箱，需要配置开通SMTP
+EMAIL_HOST_USER = '949011578@qq.com'
+# 在邮箱中设置的客户端授权密码
+# 此处的EMAIL_HOST_PASSWORD是用QQ邮箱授权码登录
+EMAIL_HOST_PASSWORD = 'hlslmjbelkuvbcah'
+# 收件人看到的发件人
+# EMAIL_FROM = '152xxxx7756@sina.cn'
+
