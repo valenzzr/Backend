@@ -92,14 +92,12 @@ class RegisterViews(View):
             return JsonResponse({'message': str(e)})
 
 
-# 测试Token
-class CheckToken(View):
-    @method_decorator(logging_check)
+# 旅客登录功能
+class LoginViews(View):
     def post(self, request):
         json_str = request.body
         data = json.loads(json_str)
         name = data.get('name')
-        # phone_number = data.get('phone_number')
         username = data.get('username')
         password = data.get('password')
 
@@ -107,69 +105,24 @@ class CheckToken(View):
             old_passenger = Passenger.objects.get(username=username, name=name)
         except Exception as e:
             return JsonResponse({
-                'code': 10200, 'error': '用户名或密码错误'
+                'code': 10201, 'error': '用户名或密码错误'
             })
 
         p_m = hashlib.md5()
         p_m.update(password.encode())
         if p_m.hexdigest() != old_passenger.password:
             return JsonResponse({
-                'code': 10200, 'error': '用户名或密码错误'
+                'code': 10202, 'error': '用户名或密码错误'
             })
 
         # 记录会话状态
         # Token
         token = make_token(username)
-        return HttpResponse('okk')
-        # return JsonResponse({
-        #     'message': '登陆成功', 'username': username, 'data': {'token': token}
-        # })
-
-
-# 旅客登录功能
-class LoginViews(View):
-    @method_decorator(logging_check)
-    def post(self, request):
-        json_str = request.body
-        data = json.loads(json_str)
-        name = data.get('name')
-        # phone_number = data.get('phone_number')
-        username = data.get('username')
-        password = data.get('password')
-
-        try:
-            old_passenger = Passenger.objects.get(username=username, name=name)
-        except Exception as e:
-            return JsonResponse({
-                'code': 10200, 'error': '用户名或密码错误'
-            })
-
-        p_m = hashlib.md5()
-        p_m.update(password.encode())
-        if p_m.hexdigest() != old_passenger.password:
-            return JsonResponse({
-                'code': 10200, 'error': '用户名或密码错误'
-            })
-
-        # 记录会话状态
-        # Token
-        # token = make_token(username)
-        # return JsonResponse({
-        #     'message': '登陆成功', 'username': username, 'data': {'token': token}
-        # })
-
-        # Session
-        request.session['username'] = username
-        request.session['name'] = name
-        print(username, name)
-
         return JsonResponse({
-            'code': 200,
-            'message': '登录成功'
+            'message': '登录成功', 'username': username, 'data': {'token': token}
         })
 
 
-@logging_check
 # 更新用户信息
 class UpdateInfoViews(View):
     @method_decorator(logging_check)
@@ -177,26 +130,22 @@ class UpdateInfoViews(View):
         json_str = request.body
         data = json.loads(json_str)
 
-        # user = request.myuser
+        user = request.myuser
 
-        username = request.session.get('username')
-        name = request.session.get('name')
-        try:
-            user = Passenger.objects.get(username=username, name=name)
-        except Exception as e:
-            return JsonResponse({
-                'code': 10201,
-                'error': '未登录或登录已过期，请重新登录'
-            })
         phone_number = data.get('phone_number')
         email = data.get('email')
         password = data.get('password')
+        print(phone_number, email, password)
         if phone_number:
             user.phone_number = phone_number
         if email:
             user.email = email
         if password:
-            user.password = password
+            # 若是更新密码，仍需要先加密
+            p_m = hashlib.md5()
+            p_m.update(password.encode())
+            user.password = p_m.hexdigest()
+
         user.save()
         return JsonResponse({
             'code': 200, 'message': '修改个人信息成功'
@@ -440,6 +389,7 @@ class SearchTicketViews(View):
         return JsonResponse(dict1)
 
 
+# 旅客添加行李
 class AddLuggageViews(View):
     def convert_weight_string(self, weight_string):
         try:
