@@ -526,6 +526,18 @@ class ReserveParking(View):
         })
 
 
+class RepairViews():
+    def post(self, request):
+        json_str = request.body
+        data = json.loads(json_str)
+        dev_id = data.get('dev_id')
+        dev_name = data.get('dev_name')
+        image = data.get('image')
+        status = 'Waiting repair'
+        dev = Device.objects.create(dev_id=dev_id, dev_name=dev_name,image = image, status=status)
+        dev.save()
+
+
 class MerchantInViews(View):
     def post(self, request):
         json_str = request.body

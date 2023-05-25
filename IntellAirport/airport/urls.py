@@ -28,6 +28,8 @@ urlpatterns = [
     path('buyticket/', BuyTicketsViews.as_view()),
     path('searchinformation/', SearchFlightInfoViews.as_view()),
     path('searchticket/', SearchTicketViews.as_view()),
-    # 127.0.0.1:8000/api/addLuggage 添加行李
+    # 127.0.0.1:8000/api/addLuggage/ 添加行李
     path('addLuggage/',AddLuggageViews.as_view()),
+    # 127.0.0.1:8000/api/repair/ 系统报修
+    path('repair/', RepairViews.as_view()),
 ]
