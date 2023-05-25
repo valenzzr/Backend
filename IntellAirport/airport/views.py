@@ -306,6 +306,7 @@ class UpdateFlightPriceViews(View):
         })
 
 
+# 旅客购买机票
 class BuyTicketsViews(View):
     def post(self, request):
         json_str = request.body
@@ -445,7 +446,7 @@ class AddLuggageViews(View):
 
 
 # 旅客追踪自己的行李
-class TrackLuggage(View):
+class TrackLuggageViews(View):
     def get(self, request):
         json_str = request.body
         data = json.loads(json_str)
@@ -476,7 +477,7 @@ class TrackLuggage(View):
 
 
 # 查询当前可用的停车位
-class SearchParking(View):
+class SearchParkingViews(View):
     def get(self):
         all_parking = Parking.objects.all()
         dict1 = {}
@@ -499,7 +500,7 @@ class SearchParking(View):
 
 
 # 预约停车位
-class ReserveParking(View):
+class ReserveParkingViews(View):
     def post(self, request):
         json_str = request.body
         data = json.loads(json_str)
@@ -538,6 +539,7 @@ class RepairViews():
         dev.save()
 
 
+# 商家申请入驻
 class MerchantInViews(View):
     def post(self, request):
         json_str = request.body
@@ -572,7 +574,8 @@ class StoresInViews(View):
         shop_id = data.get('shop_id')
 
         try:
-            store = Store.objects.create(store_id=store_id, store_name=store_name, shop_id=shop_id, store_image=store_image)
+            store = Store.objects.create(store_id=store_id, store_name=store_name, shop_id=shop_id,
+                                         store_image=store_image)
         except Exception as e:
             return JsonResponse({
                 'code': 10702,
@@ -587,15 +590,19 @@ class StoresInViews(View):
         })
 
 
+# 商店销售商品
 class SaleStoreViews(View):
     # def get(self, request, shop_id):  # 返回商店所有商品信息
-
 
     def post(self, request):  # 购买商品
         json_str = request.body
         data = json.loads(json_str)
         passenger_name = data.get('passenger_name')
+        store_name = data.get('store_name')
+        shop_id = data.get('shop_id')
         store_id = data.get('store_id')
+
+        # 取到要购买商品的旅客
         try:
             passenger = Passenger.objects.get(name=passenger_name)
         except Exception as e:
@@ -605,6 +612,8 @@ class SaleStoreViews(View):
             })
 
         passenger_identification = passenger.identification
+
+        # 查找passenger所持有的票
         try:
             ticket = Ticket.objects.get(passenger_id=passenger_identification)
         except Exception as e:
@@ -613,10 +622,14 @@ class SaleStoreViews(View):
                 'error': '该旅客还为买票，无法送货至指定登机口'
             })
 
+        # 拿到航站楼号
         terminal_id = ticket.terminal.terminal_number
+        # 拿到登机口号
+        gate_id = ticket.gate.gate_number
 
+        # 取到要购买的商品
         try:
-            store = Store.objects.get(store_id=store_id)
+            store = Store.objects.get(shop_id= shop_id, store_id=store_id, store_name=store_name)
         except Exception as e:
             return JsonResponse({
                 'code': 10705,
@@ -626,12 +639,12 @@ class SaleStoreViews(View):
         result = {
             'code': 200,
             'message': '购买商品成功!',
-            'store':{  # 返回商品信息
+            'store': {  # 返回商品信息
                 'shop_id': store.shop_id,
                 'store_id': store.store_id,
                 'store_name': store.store_name,
                 'store_image': store.store_image
             },
-            'terminal_id': terminal_id  # 送至指定登机口
+            'terminal_id': terminal_id,  # 返回旅客所在航站楼号
+            'gate_id': gate_id  # 返回旅客所在登机口号
         }
-
