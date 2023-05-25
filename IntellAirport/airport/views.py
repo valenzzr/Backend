@@ -533,9 +533,9 @@ class RepairViews():
         data = json.loads(json_str)
         dev_id = data.get('dev_id')
         dev_name = data.get('dev_name')
-        image = data.get('image')
+        dev_image = request.FILES['devices']
         status = 'Waiting repair'
-        dev = Device.objects.create(dev_id=dev_id, dev_name=dev_name,image = image, status=status)
+        dev = Device.objects.create(dev_id=dev_id, dev_name=dev_name, image=dev_image, status=status)
         dev.save()
 
 
@@ -629,7 +629,7 @@ class SaleStoreViews(View):
 
         # 取到要购买的商品
         try:
-            store = Store.objects.get(shop_id= shop_id, store_id=store_id, store_name=store_name)
+            store = Store.objects.get(shop_id=shop_id, store_id=store_id, store_name=store_name)
         except Exception as e:
             return JsonResponse({
                 'code': 10705,
