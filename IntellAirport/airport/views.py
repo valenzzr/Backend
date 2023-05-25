@@ -506,8 +506,6 @@ class ReserveParkingViews(View):
         data = json.loads(json_str)
         parking_number = data.get('parking_number')
         passenger_id = data.get('passenger_id')
-        start_time = data.get('start_time')
-
         try:
             parking = Parking.objects.get(parking_number=parking_number)
         except Exception as e:
@@ -515,9 +513,14 @@ class ReserveParkingViews(View):
                 'code': 10602,
                 'error': '未找到该停车位，请确认该停车位是否空闲'
             })
-
+        if parking.status == '占用':
+            return JsonResponse({
+                'code': 10602,
+                'error': '未找到该停车位，请确认该停车位是否空闲'
+            })
         parking.status = '占用'
         parking.passenger_id = passenger_id
+        parking.start_time = datetime.datetime.now()
         parking.duration = "None"
         parking.save()
 
@@ -527,7 +530,7 @@ class ReserveParkingViews(View):
         })
 
 
-class RepairViews():
+class RepairViews(View):
     def post(self, request):
         json_str = request.body
         data = json.loads(json_str)
@@ -537,6 +540,35 @@ class RepairViews():
         status = 'Waiting repair'
         dev = Device.objects.create(dev_id=dev_id, dev_name=dev_name, image=dev_image, status=status)
         dev.save()
+        return JsonResponse({
+            'message': '添加成功'
+        })
+
+
+class ConfirmRepairViews(View):
+    def get(self,request):
+        dev_list = Device.objects.filter(status = 'Waiting repair')
+        message = {}
+        for i in dev_list:
+            message[i.dev_id] = {'dev_id': i.dev_id,'dev_name': i.dev_name}
+        return JsonResponse(message)
+
+    def post(self,request):
+        json_str = request.body
+        data = json.loads(json_str)
+        dev_id = data.get('dev_id')
+        try:
+            dev = Device.objects.get(dev_id= dev_id)
+        except Exception as e:
+            return JsonResponse({
+                'code': 10701,
+                'error': '不存在该设备的报修请求，请重新审批'
+            })
+        dev.status = 'Repairing'
+        dev.save()
+        return JsonResponse({
+            'message': '审批成功'
+        })
 
 
 # 商家申请入驻
@@ -619,7 +651,7 @@ class SaleStoreViews(View):
         except Exception as e:
             return JsonResponse({
                 'code': 10704,
-                'error': '该旅客还为买票，无法送货至指定登机口'
+                'error': '该旅客还未买票，无法送货至指定登机口'
             })
 
         # 拿到航站楼号
