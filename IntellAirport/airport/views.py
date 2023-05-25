@@ -4,6 +4,7 @@ import datetime
 
 import jwt
 from django.core.mail import send_mail
+from django.utils import timezone
 from django.db import IntegrityError
 from django.shortcuts import render
 from django.http import *
@@ -530,6 +531,7 @@ class ReserveParkingViews(View):
         })
 
 
+# 报修设备和设施(附带图片)
 class RepairViews(View):
     def post(self, request):
         json_str = request.body
@@ -545,20 +547,21 @@ class RepairViews(View):
         })
 
 
+# 等待管理员审批
 class ConfirmRepairViews(View):
-    def get(self,request):
-        dev_list = Device.objects.filter(status = 'Waiting repair')
+    def get(self, request):
+        dev_list = Device.objects.filter(status='Waiting repair')
         message = {}
         for i in dev_list:
-            message[i.dev_id] = {'dev_id': i.dev_id,'dev_name': i.dev_name}
+            message[i.dev_id] = {'dev_id': i.dev_id, 'dev_name': i.dev_name}
         return JsonResponse(message)
 
-    def post(self,request):
+    def post(self, request):
         json_str = request.body
         data = json.loads(json_str)
         dev_id = data.get('dev_id')
         try:
-            dev = Device.objects.get(dev_id= dev_id)
+            dev = Device.objects.get(dev_id=dev_id)
         except Exception as e:
             return JsonResponse({
                 'code': 10701,
@@ -680,3 +683,95 @@ class SaleStoreViews(View):
             'terminal_id': terminal_id,  # 返回旅客所在航站楼号
             'gate_id': gate_id  # 返回旅客所在登机口号
         }
+
+
+# 查看航班时刻表（返回当前还未起飞的航班信息）
+class SearchFlightTimeViews(View):
+    def get(self, request):
+        flights = Flight.objects.all()
+        dict1 = {}
+        for flight in flights:
+            if flight.departure_datetime > timezone.now():
+                dict1[flight.flight_number] = {
+                    'flight_number': flight.flight_number,
+                    'flight.origin': flight.origin,
+                    'flight.destination': flight.destination,
+                    'departure_datetime': flight.departure_datetime,
+                    'arrival_datetime': flight.arrival_datetime,
+                    'price': flight.price,
+                    'airline_name_id': flight.airline_name_id,
+                    'gate_id': flight.gate_id,
+                    'runway_id': flight.runway_id,
+                    'terminal_id': flight.terminal_id
+                }
+        return JsonResponse(dict1)
+
+    def post(self, request):
+        json_str = request.body
+        data = json.loads(json_str)
+        origin = data.get('origin')
+        destination = data.get('destination')
+
+        flights = Flight.objects.filter(origin=origin, destination=destination)
+
+        if not flights:
+            return JsonResponse({
+                'code': 10803,
+                'error': '您查询的地点之间还没有航班哦，换个试试吧'
+            })
+
+        dict1 = {}
+        for flight in flights:
+            if flight.departure_datetime > timezone.now():
+                dict1[flight.flight_number] = {
+                    'flight_number': flight.flight_number,
+                    'departure_datetime': flight.departure_datetime,
+                    'arrival_datetime': flight.arrival_datetime,
+                    'price': flight.price,
+                    'airline_name_id': flight.airline_name_id,
+                    'gate_id': flight.gate_id,
+                    'runway_id': flight.runway_id,
+                    'terminal_id': flight.terminal_id
+                }
+
+
+# 批量导入航班信息
+def import_flight_info(request):
+    if request.method != 'GET':
+        return JsonResponse({
+            'code': 10801,
+            'error': 'Please use GET！'
+        })
+
+    if not flight_arr:
+        return JsonResponse({
+            'code': 10802,
+            'message': '当前没有航班信息可以导入，请先添加航班信息'
+        })
+
+    dict1 = {}
+    for flight in flight_arr:
+        flight.save()
+        dict1[flight.flight_number] = {
+            'flight_number': flight.flight_number,
+            'flight.origin': flight.origin,
+            'flight.destination': flight.destination,
+            'departure_datetime': flight.departure_datetime,
+            'arrival_datetime': flight.arrival_datetime,
+            'price': flight.price,
+            'status': flight.status,
+            'airline_name_id': flight.airline_name_id,
+            'gate_id': flight.gate_id,
+            'runway_id': flight.runway_id,
+            'terminal_id': flight.terminal_id
+        }
+
+    return JsonResponse({
+        'code': 200,
+        'message': '当前所有航班信息已经导入',
+        'flights': dict1
+    })
+
+
+# 打印财务报表
+# TODO: 实现打印财务报表功能
