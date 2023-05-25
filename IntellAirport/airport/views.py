@@ -36,7 +36,7 @@ def send_email(request):
     # 发件人
     from_email = "949011578@qq.com"
     # 收件人，可以是多个，以列表的形式存储
-    recipient_list = ["152xxxx7756@sina.cn", "iino-miko@outlook.com", ]
+    recipient_list = ["iino-miko@outlook.com", ]
     send_mail(subject=subject, from_email=from_email, recipient_list=recipient_list, message=message)
     return JsonResponse({
         'code': 200,
@@ -91,8 +91,9 @@ class RegisterViews(View):
             passenger.save()
             subject = '注册成功邮件提示'
             message = '感谢您的注册，您已注册成功!',
-            send_email_celery.delay(request, email, subject, message)
+            send_email_celery(request, email, subject, message)
             return JsonResponse({
+                'code': 200,
                 'message': '恭喜您，注册成功！'
             })
         except IntegrityError as e:
