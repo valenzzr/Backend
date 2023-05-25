@@ -138,11 +138,12 @@ class Runway(models.Model):
 class Ticket(models.Model):
     origin = models.CharField(max_length=20)
     destination = models.CharField(max_length=20)
+    flight_number = models.ForeignKey(Flight, on_delete=models.CASCADE, to_field='flight_number')
     airline_name = models.ForeignKey(Airline, on_delete=models.CASCADE, to_field='name')
     ticket_number_random = models.CharField(max_length=20, primary_key=True, default=generate_random_number)
     status = models.CharField(max_length=20)
-    departure_datetime = models.DateTimeField()
-    arrival_datetime = models.DateTimeField()
+    departure_datetime = models.DateTimeField()  # TODO:需要设置外键
+    arrival_datetime = models.DateTimeField()  # TODO:需要设置外键
     terminal = models.ForeignKey(Terminal, on_delete=models.CASCADE, to_field='terminal_number')
     gate = models.ForeignKey(Gate, on_delete=models.CASCADE, to_field='gate_number')
     passenger = models.ForeignKey(Passenger, on_delete=models.CASCADE, to_field='identification')

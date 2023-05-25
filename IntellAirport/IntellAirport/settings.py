@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import os
 from pathlib import Path
 
+from django.core.cache.backends.redis import RedisCache
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -146,6 +148,17 @@ CORS_ALLOW_HEADERS = (
     'x-requested-with',
 )
 
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
+
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
@@ -160,7 +173,15 @@ EMAIL_PORT = 25  # 端口默认都是25不需要修改
 EMAIL_HOST_USER = '949011578@qq.com'
 # 在邮箱中设置的客户端授权密码
 # 此处的EMAIL_HOST_PASSWORD是用QQ邮箱授权码登录
-EMAIL_HOST_PASSWORD = 'hlslmjbelkuvbcah'
-# 收件人看到的发件人
+EMAIL_HOST_PASSWORD = 'pgsfaapdgdesbcea'
+# # 收件人看到的发件人
 # EMAIL_FROM = '152xxxx7756@sina.cn'
+
+
+
+# CELERY_ENABLE_UTC = False
+# CELERY_TIMEZONE = "Asia/Shanghai"
+# CELERY_BROKER_URL = "redis://127.0.0.1:6379/1"
+# CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379/2"
+
 
