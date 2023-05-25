@@ -524,3 +524,102 @@ class ReserveParking(View):
             'code': 200,
             'message': '车位预约成功',
         })
+
+
+class MerchantInViews(View):
+    def post(self, request):
+        json_str = request.body
+        data = json.loads(json_str)
+        shop_id = data.post('id')
+        shop_name = data.post('name')
+        shop_contact_number = data.post('contact_number')
+
+        try:
+            shop = Shop.objects.create(id=shop_id, name=shop_name, contact_number=shop_contact_number)
+        except Exception as e:
+            return JsonResponse({
+                'code': 10701,
+                'error': '商家入驻失败，请重新申请!'
+            })
+
+        shop.save()
+        return JsonResponse({
+            'code': 200,
+            'message': '商家已经成功入驻，快来店里逛逛吧!'
+        })
+
+
+# 导入商品
+class StoresInViews(View):
+    def post(self, request):
+        json_str = request.body
+        data = request.loads(json_str)
+        store_id = data.get('store_id')
+        store_name = data.get('store_name')
+        store_image = request.FILES['stores']
+        shop_id = data.get('shop_id')
+
+        try:
+            store = Store.objects.create(store_id=store_id, store_name=store_name, shop_id=shop_id, store_image=store_image)
+        except Exception as e:
+            return JsonResponse({
+                'code': 10702,
+                'error': '商品导入失败'
+            })
+
+        store.save()
+
+        return JsonResponse({
+            'code': 200,
+            'message': '商品导入成功'
+        })
+
+
+class SaleStoreViews(View):
+    # def get(self, request, shop_id):  # 返回商店所有商品信息
+
+
+    def post(self, request):  # 购买商品
+        json_str = request.body
+        data = json.loads(json_str)
+        passenger_name = data.get('passenger_name')
+        store_id = data.get('store_id')
+        try:
+            passenger = Passenger.objects.get(name=passenger_name)
+        except Exception as e:
+            return JsonResponse({
+                'code': 10703,
+                'error': '未找到该旅客'
+            })
+
+        passenger_identification = passenger.identification
+        try:
+            ticket = Ticket.objects.get(passenger_id=passenger_identification)
+        except Exception as e:
+            return JsonResponse({
+                'code': 10704,
+                'error': '该旅客还为买票，无法送货至指定登机口'
+            })
+
+        terminal_id = ticket.terminal.terminal_number
+
+        try:
+            store = Store.objects.get(store_id=store_id)
+        except Exception as e:
+            return JsonResponse({
+                'code': 10705,
+                'error': '未找到到该商品'
+            })
+
+        result = {
+            'code': 200,
+            'message': '购买商品成功!',
+            'store':{  # 返回商品信息
+                'shop_id': store.shop_id,
+                'store_id': store.store_id,
+                'store_name': store.store_name,
+                'store_image': store.store_image
+            },
+            'terminal_id': terminal_id  # 送至指定登机口
+        }
+
