@@ -14,6 +14,10 @@ from pathlib import Path
 
 from django.core.cache.backends.redis import RedisCache
 
+# from apscheduler.schedulers.background import BackgroundScheduler
+#
+# from airport.tasks import check_flight_departure
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -38,6 +42,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "corsheaders",
+    "django_apscheduler",
     "airport",
 ]
 
@@ -158,7 +163,6 @@ CACHES = {
     }
 }
 
-
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
@@ -176,12 +180,5 @@ EMAIL_HOST_USER = '949011578@qq.com'
 EMAIL_HOST_PASSWORD = 'pgsfaapdgdesbcea'
 # # 收件人看到的发件人
 # EMAIL_FROM = '152xxxx7756@sina.cn'
-
-
-
-# CELERY_ENABLE_UTC = False
-# CELERY_TIMEZONE = "Asia/Shanghai"
-# CELERY_BROKER_URL = "redis://127.0.0.1:6379/1"
-# CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379/2"
-
-
+#
+# SCHEDULER_AUTOSTART = True
