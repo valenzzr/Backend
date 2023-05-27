@@ -32,11 +32,37 @@ def send_email_celery(request, email, subject, message):
 def send_flight_reminder_email(ticket):
     # 构建邮件内容
     subject = '临近起飞通知'
-    if ticket.airline_name_id == 'CZ':
-        airline_name = '东方航空'
-    elif ticket.airline_name_id == 'MU':
-        airline_name = '南方航空'
-    message = f'    尊敬的{ticket.passenger.name}乘客，感谢您选择我们的航空公司。我们提醒您，您的航班{ticket.flight.flight_number}将在两小时后起飞。为了确保您的旅行顺利进行，请您务必在起飞前两小时完成在线值机。通过在线值机，您可以选择座位、打印登机牌，并且节省排队的时间。请您访问我们的官方网站或使用我们的手机应用程序，点击值机选项，并按照提示完成值机流程。如果您需要任何帮助或有任何疑问，请随时联系我们的客户服务团队。再次感谢您选择我们的航空公司，祝您旅途愉快！最好的祝福，{airline_name}团队 '
+
+    airline_name_id = ticket.airline_name_id
+    airline_names = {
+        'CZ': '中国南方航空',
+        'MU': '中国东方航空',
+        'CA': '中国国际航空',
+        'HU': '海南航空',
+        'ZH': '深圳航空',
+        '3U': '中国西南航空',
+        'MF': '中国厦门航空',
+        '8L': '中国吉祥航空',
+        'EU': '中国四川航空',
+        '9C': '中国春秋航空',
+        'KL': '荷兰皇家航空',
+        'AF': '法国航空',
+        'UA': '美国联合航空',
+        'DL': '美国达尔美航空',
+        'LH': '德国汉莎航空',
+        'BA': '英国航空',
+        'SQ': '新加坡航空',
+        'EK': '阿联酋航空',
+        'JL': '日本航空',
+        'AC': '加拿大航空'
+    }
+
+    airline_name = airline_names.get(airline_name_id, '未知航空公司')
+
+    print(ticket.flight_number)
+    message = \
+        f"""尊敬的乘客，{ticket.passenger.name}(先生/女士)：\n\t感谢您选择{airline_name}公司。我们提醒您，您的航班{ticket.flight_number.flight_number}将在两小时后起飞。为了确保您的旅行顺利进行，请您务必在起飞前两小时完成在线值机。通过在线值机，您可以选择座位、打印登机牌，并且节省排队的时间。请您访问我们的官方网站或使用我们的手机应用程序，点击值机选项，并按照提示完成值机流程。如果您需要任何帮助或有任何疑问，请随时联系我们的客户服务团队。再次感谢您选择我们的航空公司，祝您旅途愉快！\n最好的祝福，{airline_name}团队 
+        """
     # message = f'Dear {ticket.passenger.name}, your flight {ticket.flight_number} is departing in 2 hours.'
     from_email = '949011578@qq.com'
     recipient_list = [ticket.passenger.email]
@@ -56,7 +82,7 @@ def check_flight_departure():
         time_difference = flight.departure_datetime - timezone.now()
         hours_remaining = time_difference.total_seconds()  # // 3600
         print(flight.departure_datetime, timezone.now(), time_difference, hours_remaining, email_send)
-        if 7191 <= hours_remaining <= 7209 and not email_send:
+        if 7198 <= hours_remaining <= 7203 and not email_send:
             # if hours_remaining == 2 and not email_send:
             tickets = Ticket.objects.filter(flight_number=flight.flight_number)
             for ticket in tickets:
