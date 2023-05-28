@@ -182,3 +182,15 @@ EMAIL_HOST_PASSWORD = 'pgsfaapdgdesbcea'
 # EMAIL_FROM = '152xxxx7756@sina.cn'
 #
 # SCHEDULER_AUTOSTART = True
+
+
+
+# CELERY_ENABLE_UTC = False
+# CELERY_TIMEZONE = "Asia/Shanghai"
+# CELERY_BROKER_URL = "redis://127.0.0.1:6379/1"
+# CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379/2"
+
+# 支付宝参数配置
+# 在支付宝开放平台的沙箱应用中获取APPID和支付宝网关
+ALIPAY_APPID = '2021000122692782'
+ALIPAY_URL = 'https://openapi.alipaydev.com/gateway.do'  # 支付宝网关

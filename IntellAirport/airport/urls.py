@@ -1,8 +1,9 @@
 from django.urls import path
-
+from django.urls import re_path as url
 from . import views
 from .views import *
 
+from django.contrib import admin
 app_name = 'airport'
 
 urlpatterns = [
@@ -64,4 +65,7 @@ urlpatterns = [
     # 127.0.0.1:8000/api/reserveParking 预约停车位
     path('reserveParking/', ReserveParkingViews.as_view()),
 
+
+    url(r"^pay/", views.pay, name='pay'),
+    path('payment/status/',PaymentStatusView.as_view()),
 ]
