@@ -1,8 +1,9 @@
 import json
 import time
 import datetime
-
+import os
 import jwt
+from alipay import AliPay
 from django.core.mail import send_mail
 from django.utils import timezone
 from django.db import IntegrityError
@@ -340,12 +341,12 @@ class BuyTicketsViews(View):
                                            destination=destination, origin=origin, status=status,
                                            airline_name=airline_name, terminal=terminal, gate=gate)
             ticket.save()
-            return JsonResponse({'message': '购票成功，请支付'})
+            return JsonResponse({'message': '购票成功，请支付',
+                                 'ticket_no': ticket.ticket_number_random})
         except Exception as e:
             return JsonResponse({
                 'message': str(e)
             })
-        # TODO：后面实现支付功能，并将状态改为已支付，支付失败则删除信息
 
 
 # 查询航班信息
@@ -625,6 +626,14 @@ class StoresInViews(View):
         })
 
 
+# 打印报表
+class PrintReportViews(View):
+    def post(self,request):
+        json_str = request.body
+        data = request.loads(json_str)
+        airline_name = data.get('airline_name')
+
+
 # 商店销售商品
 class SaleStoreViews(View):
     # def get(self, request, shop_id):  # 返回商店所有商品信息
@@ -775,3 +784,83 @@ def import_flight_info(request):
 
 # 打印财务报表
 # TODO: 实现打印财务报表功能
+
+
+
+
+#支付宝调用功能
+def pay(request):
+    ticket_no = request.POST.get("ticket_no")  # 将订票时提供的机票号传回来，用于后续购买的验证
+    app_private_key_string = open(os.path.join(settings.BASE_DIR, 'keys/app_private_key.pem')).read()
+    alipay_public_key_string = open(os.path.join(settings.BASE_DIR, 'keys/app_public_key.pem')).read()
+    # 创建用于进行支付宝支付的工具对象
+    alipay = AliPay(
+        appid=settings.ALIPAY_APPID,
+        app_notify_url=None,  # 默认回调url
+        app_private_key_string=app_private_key_string,
+        # 支付宝的公钥，验证支付宝回传消息使用，不是你自己的公钥,
+        alipay_public_key_string=alipay_public_key_string,
+        sign_type="RSA2",  # RSA 或者 RSA2
+        debug= True,
+        # 默认False  配合沙箱模式使用
+    )
+
+    # 电脑网站支付，需要跳转到https://openapi.alipaydev.com/gateway.do? + order_string
+    order_string = alipay.api_alipay_trade_page_pay(
+        out_trade_no= ticket_no,  # 用票的主键作为订单号
+        total_amount=str(0.01),  # 将Decimal类型转换为字符串交给支付宝
+        subject= "机票支付",
+        body="您的机票订单",
+        return_url="https://example.com",  # TODO 此处要前端配合写一个网页用于跳转，实现给用户看到的支付完成
+        notify_url="https://example.com/notify"  # TODO 此处要前端写一个网页用于将支付宝返回的数据传到后端进行验证，然后后端更新数据
+    )
+
+    # 让用户进行支付的支付宝页面网址
+    url = settings.ALIPAY_URL + "?" + order_string
+
+    return JsonResponse({"code": 0, "message": "请求支付成功", "url": url})
+
+
+class PaymentStatusView(View):
+
+    def put(self, request):
+        # 1. 接收数据
+        data = request.GET
+        # 2. 查询字符串转换为字典 验证数据
+        data = data.dict()
+
+        # 3. 验证没有问题获取支付宝交易流水号
+        signature = data.pop("sign")
+
+        app_private_key_string = open(os.path.join(settings.BASE_DIR, 'keys/app_private_key.pem')).read()
+        alipay_public_key_string = open(os.path.join(settings.BASE_DIR, 'keys/app_public_key.pem')).read()
+        # 创建支付宝实例
+        alipay = AliPay(
+            appid=settings.ALIPAY_APPID,
+            app_notify_url=None,  # 默认回调url
+            app_private_key_string=app_private_key_string,
+            # 支付宝的公钥，验证支付宝回传消息使用，不是你自己的公钥,
+            alipay_public_key_string=alipay_public_key_string,
+            sign_type="RSA2",  # RSA 或者 RSA2
+            debug=True,  # 默认False
+        )
+        success = alipay.verify(data, signature)
+        if success:
+            # 获取 trade_no	String	必填	64	支付宝交易号
+            trade_no = data.get('trade_no')
+            ticket_no = data.get('out_trade_no')
+            try:
+                ticket = Ticket.objects.get(ticket_number_random = ticket_no)
+            except Exception as e:
+                return JsonResponse({
+                    'code': 10801,
+                    'error': '机票不存在'
+                })
+            ticket.status = "已支付"
+            ticket.save()
+            # 4. 改变订单状态
+            return JsonResponse({'code': 0, 'errmsg': 'ok', 'trade_id': trade_no})
+        else:
+
+            return JsonResponse({'code': 400, 'errmsg': '请到个人中心的订单中查询订单状态'})
+
