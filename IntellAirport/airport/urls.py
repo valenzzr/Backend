@@ -64,7 +64,8 @@ urlpatterns = [
     path('searchParking/', SearchParkingViews.as_view()),
     # 127.0.0.1:8000/api/reserveParking 预约停车位
     path('reserveParking/', ReserveParkingViews.as_view()),
-
+    # 127.0.0.1:8000/api/printReport
+    path('printReport/', PrintReportViews.as_view()),
 
     url(r"^pay/", views.pay, name='pay'),
     path('payment/status/',PaymentStatusView.as_view()),

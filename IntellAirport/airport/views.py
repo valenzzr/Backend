@@ -666,6 +666,24 @@ class PrintReportViews(View):
         json_str = request.body
         data = request.loads(json_str)
         airline_name = data.get('airline_name')
+        flight_all = []
+        for flight in Flight.objects.all():
+            if flight.airline == airline_name:
+                flight_all.append(flight)
+        returns = {}
+        for flight in flight_all:
+            ticket_num = 0
+            money = 0
+            for ticket in Ticket.objects.all():
+                if ticket.flight_number == flight.flight_number:
+                    ticket_num = ticket_num+1
+                    money = money + flight.price
+            returns[flight.flight_number] = {'flight_number': flight.flight_number,
+                                             'airline': airline_name,
+                                             'ticket_sold': ticket_num,
+                                             'money': money}
+        return JsonResponse(returns)
+
 
 
 # 商店销售商品
@@ -820,7 +838,9 @@ def import_flight_info(request):
 # TODO: 实现打印财务报表功能
 
 
-# 支付宝调用功能
+
+
+#支付宝调用功能
 def pay(request):
     ticket_no = request.POST.get("ticket_no")  # 将订票时提供的机票号传回来，用于后续购买的验证
     app_private_key_string = open(os.path.join(settings.BASE_DIR, 'keys/app_private_key.pem')).read()
