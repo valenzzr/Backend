@@ -377,7 +377,16 @@ class BuyTicketsViews(View):
                                            airline_name=airline_name, terminal=terminal, gate=gate)
             ticket.save()
             return JsonResponse({'message': '购票成功，请支付',
-                                 'ticket_no': ticket.ticket_number_random})
+                                 'ticket_no': ticket.ticket_number_random,
+                                 'passenger': old_passenger,
+                                 'departure_datetime': departure_datetime,
+                                 'arrival_datetime':arrival_datetime,
+                                 'destination':destination,
+                                 'origin':origin,
+                                 'airline_name':airline_name,
+                                 'terminal':terminal,
+                                 'gate':gate})
+
         except Exception as e:
             return JsonResponse({
                 'message': str(e)
