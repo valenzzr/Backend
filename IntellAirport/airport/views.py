@@ -590,12 +590,13 @@ class TrackLuggageViews(View):
                 'code': 10502, 'message': '未找到该旅客'
             })
 
-        try:
-            tickets = Ticket.objects.get(passenger_id=identification)
-        except Exception as e:
+        tickets = Ticket.objects.filter(passenger_id=identification)
+
+        if not tickets:
             return JsonResponse({
                 'code': 10503, 'message': '该旅客未买票'
             })
+
         thirty_minutes = datetime.timedelta(minutes=30)
         for ticket in tickets:
             if ticket.arrival_datetime + thirty_minutes <= datetime.datetime.now():
