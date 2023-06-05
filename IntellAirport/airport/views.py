@@ -342,7 +342,37 @@ class UpdateFlightPriceViews(View):
             'code': 200, 'message': '调整航班价格成功'
         })
 
+class payCarViews(View):
+    def post(self, request):
+        json_str = request.body
+        data = json.loads(json_str)
+        parking_number = data.get('parking_number')
+        try:
+            parking = Parking.objects.get(parking_number=parking_number)
+        except Exception as e:
+            return JsonResponse({
+                'code': 10401, 'error': '不存在该停车位,重新选择'
+            })
+        duration = datetime.datetime.now()-parking.start_time
+        fee = duration*10
+        identification = data.get('identification')
+        try:
+            old_passenger = Passenger.objects.get(identification=identification)
+        except Exception as e:
+            return JsonResponse({
+                'code': 10402, 'error': '不存在该旅客，是否已注册？'
+            })
+        try:
 
+            return JsonResponse({'message': '请支付停车位',
+                                 'parking_number':parking_number,
+                                 'fee':fee,
+                                 )
+
+        except Exception as e:
+            return JsonResponse({
+                'message': str(e)
+            })
 # 旅客购买机票
 class BuyTicketsViews(View):
     def post(self, request):
@@ -376,16 +406,19 @@ class BuyTicketsViews(View):
                                            destination=destination, origin=origin, status=status,
                                            airline_name=airline_name, terminal=terminal, gate=gate)
             ticket.save()
+
             return JsonResponse({'message': '购票成功，请支付',
                                  'ticket_no': ticket.ticket_number_random,
-                                 'passenger': old_passenger,
+                                 'passenger': old_passenger.identification,
                                  'departure_datetime': departure_datetime,
                                  'arrival_datetime':arrival_datetime,
                                  'destination':destination,
                                  'origin':origin,
+                                 'price':old_flight.price,
+                                 'runway':old_flight.runway.runway_number,
                                  'airline_name':airline_name,
-                                 'terminal':terminal,
-                                 'gate':gate})
+                                 'terminal':terminal.terminal_number,
+                                 'gate':gate.gate_number})
 
         except Exception as e:
             return JsonResponse({
@@ -852,6 +885,7 @@ def import_flight_info(request):
 #支付宝调用功能
 def pay(request):
     ticket_no = request.POST.get("ticket_no")  # 将订票时提供的机票号传回来，用于后续购买的验证
+    fee = request.POST.get("price")
     app_private_key_string = open(os.path.join(settings.BASE_DIR, 'keys/app_private_key.pem')).read()
     alipay_public_key_string = open(os.path.join(settings.BASE_DIR, 'keys/app_public_key.pem')).read()
     # 创建用于进行支付宝支付的工具对象
@@ -869,9 +903,41 @@ def pay(request):
     # 电脑网站支付，需要跳转到https://openapi.alipaydev.com/gateway.do? + order_string
     order_string = alipay.api_alipay_trade_page_pay(
         out_trade_no=ticket_no,  # 用票的主键作为订单号
-        total_amount=str(0.01),  # 将Decimal类型转换为字符串交给支付宝
+        total_amount=str(fee),  # 将Decimal类型转换为字符串交给支付宝
         subject="机票支付",
         body="您的机票订单",
+        return_url="https://example.com",  # TODO 此处要前端配合写一个网页用于跳转，实现给用户看到的支付完成
+        notify_url="https://example.com/notify"  # TODO 此处要前端写一个网页用于将支付宝返回的数据传到后端进行验证，然后后端更新数据
+    )
+
+    # 让用户进行支付的支付宝页面网址
+    url = settings.ALIPAY_URL + "?" + order_string
+
+    return JsonResponse({"code": 0, "message": "请求支付成功", "url": url})
+
+def pay2(request):
+    parking_number = request.POST.get('parking_number')
+    fee = request.POST.get('fee')
+    app_private_key_string = open(os.path.join(settings.BASE_DIR, 'keys/app_private_key.pem')).read()
+    alipay_public_key_string = open(os.path.join(settings.BASE_DIR, 'keys/app_public_key.pem')).read()
+    # 创建用于进行支付宝支付的工具对象
+    alipay = AliPay(
+        appid=settings.ALIPAY_APPID,
+        app_notify_url=None,  # 默认回调url
+        app_private_key_string=app_private_key_string,
+        # 支付宝的公钥，验证支付宝回传消息使用，不是你自己的公钥,
+        alipay_public_key_string=alipay_public_key_string,
+        sign_type="RSA2",  # RSA 或者 RSA2
+        debug=True,
+        # 默认False  配合沙箱模式使用
+    )
+
+    # 电脑网站支付，需要跳转到https://openapi.alipaydev.com/gateway.do? + order_string
+    order_string = alipay.api_alipay_trade_page_pay(
+        out_trade_no=parking_number,  # 用票的主键作为订单号
+        total_amount=str(fee),  # 将Decimal类型转换为字符串交给支付宝
+        subject="停车位支付",
+        body="您的停车费用订单",
         return_url="https://example.com",  # TODO 此处要前端配合写一个网页用于跳转，实现给用户看到的支付完成
         notify_url="https://example.com/notify"  # TODO 此处要前端写一个网页用于将支付宝返回的数据传到后端进行验证，然后后端更新数据
     )
@@ -919,6 +985,49 @@ class PaymentStatusView(View):
                 })
             ticket.status = "已支付"
             ticket.save()
+            # 4. 改变订单状态
+            return JsonResponse({'code': 0, 'errmsg': 'ok', 'trade_id': trade_no})
+        else:
+
+            return JsonResponse({'code': 400, 'errmsg': '请到个人中心的订单中查询订单状态'})
+
+class PaymentStatus2View(View):
+
+    def put(self, request):
+        # 1. 接收数据
+        data = request.GET
+        # 2. 查询字符串转换为字典 验证数据
+        data = data.dict()
+
+        # 3. 验证没有问题获取支付宝交易流水号
+        signature = data.pop("sign")
+
+        app_private_key_string = open(os.path.join(settings.BASE_DIR, 'keys/app_private_key.pem')).read()
+        alipay_public_key_string = open(os.path.join(settings.BASE_DIR, 'keys/app_public_key.pem')).read()
+        # 创建支付宝实例
+        alipay = AliPay(
+            appid=settings.ALIPAY_APPID,
+            app_notify_url=None,  # 默认回调url
+            app_private_key_string=app_private_key_string,
+            # 支付宝的公钥，验证支付宝回传消息使用，不是你自己的公钥,
+            alipay_public_key_string=alipay_public_key_string,
+            sign_type="RSA2",  # RSA 或者 RSA2
+            debug=True,  # 默认False
+        )
+        success = alipay.verify(data, signature)
+        if success:
+            # 获取 trade_no	String	必填	64	支付宝交易号
+            trade_no = data.get('trade_no')
+            parking_number = data.get('out_trade_no')
+            try:
+                parking = Parking.objects.get(parking_number=parking_number)
+            except Exception as e:
+                return JsonResponse({
+                    'code': 10801,
+                    'error': '车位不存在'
+                })
+            parking.status = '已支付'
+            parking.save()
             # 4. 改变订单状态
             return JsonResponse({'code': 0, 'errmsg': 'ok', 'trade_id': trade_no})
         else:

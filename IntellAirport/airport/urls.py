@@ -58,7 +58,8 @@ urlpatterns = [
     path('storesIn/', StoresInViews.as_view()),
     # 127.0.0.1:8000/api/saleStore/ 商店销售商品
     path('saleStore/', SaleStoreViews.as_view()),
-
+    #127.0.0.1:8000/api/PayCar/ 支付车位
+    path('payCar/', payCarViews.as_view()),
     # 停车管理
     # 127.0.0.1:8000/api/searchParking 查询当前可用停车位
     path('searchParking/', SearchParkingViews.as_view()),
@@ -68,5 +69,7 @@ urlpatterns = [
     path('printReport/', PrintReportViews.as_view()),
 
     url(r"^pay/", views.pay, name='pay'),
+    url(r"^pay2/", views.pay2, name='pay2'),
     path('payment/status/',PaymentStatusView.as_view()),
+    path('payment2/status/',PaymentStatus2View.as_view()),
 ]
