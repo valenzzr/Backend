@@ -146,7 +146,7 @@ class LoginViews(View):
                 return JsonResponse({
                     'code': 10202, 'error': '用户名或密码错误'
                 })
-
+            name = old_manager.name
         elif user_priority == 'staff':
             try:
                 old_staff = Staff.objects.get(username=username, password=password)
@@ -159,12 +159,12 @@ class LoginViews(View):
                 return JsonResponse({
                     'code': 10202, 'error': '用户名或密码错误'
                 })
-
+            name = old_staff.name
         # 记录会话状态
         # 为manager和staff生成token
         token = make_token(username)
         return JsonResponse({
-            'message': '登录成功', 'username': username, 'data': {'token': token}
+            'message': '登录成功', 'username': username, 'name': name, 'data': {'token': token}
         })
 
 
