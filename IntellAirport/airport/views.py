@@ -367,7 +367,7 @@ class payCarViews(View):
 
             return JsonResponse({'message': '请支付停车位',
                                  'parking_number':parking_number,
-                                 'fee':fee,
+                                 'fee':fee,}
                                  )
 
         except Exception as e:
