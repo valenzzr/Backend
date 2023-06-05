@@ -578,7 +578,7 @@ class AddLuggageViews(View):
 
 # 旅客追踪自己的行李
 class TrackLuggageViews(View):
-    def get(self, request):
+    def post(self, request):
         json_str = request.body
         data = json.loads(json_str)
         identification = data.get('identification')
@@ -600,7 +600,7 @@ class TrackLuggageViews(View):
         for ticket in tickets:
             if ticket.arrival_datetime + thirty_minutes <= datetime.datetime.now():
                 return JsonResponse({
-                    'code':10504, 'message': '飞机落地已超过30min'
+                    'code': 10504, 'message': '飞机落地已超过30min'
                 })
 
         luggage_list = Luggage.objects.filter(identification=identification)
@@ -618,7 +618,7 @@ class TrackLuggageViews(View):
 
 # 查询当前可用的停车位
 class SearchParkingViews(View):
-    def get(self,request):
+    def get(self, request):
         all_parking = Parking.objects.all()
         dict1 = {}
         for i in all_parking:
@@ -931,10 +931,6 @@ def import_flight_info(request):
         'message': '当前所有航班信息已经导入',
         'flights': dict1
     })
-
-
-# 打印财务报表
-# TODO: 实现打印财务报表功能
 
 
 # 支付宝调用功能
