@@ -604,7 +604,7 @@ class TrackLuggageViews(View):
                     'code': 10504, 'message': '飞机落地已超过30min'
                 })
 
-        luggage_list = Luggage.objects.filter(identification=identification)
+        luggage_list = Luggage.objects.filter(passenger_id=identification)
         dict1 = {}
         for i in luggage_list:
             dict1[i.luggage_number] = {
