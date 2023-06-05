@@ -366,9 +366,9 @@ class payCarViews(View):
         try:
 
             return JsonResponse({'message': '请支付停车位',
-                                 'parking_number': parking_number,
-                                 'fee': fee, }
-                                )
+                                 'parking_number':parking_number,
+                                 'fee':fee,
+                                 )
 
         except Exception as e:
             return JsonResponse({
@@ -405,7 +405,7 @@ class BuyTicketsViews(View):
             })
         try:
             ticket = Ticket.objects.create(passenger=old_passenger, departure_datetime=departure_datetime,
-                                           arrival_datetime=arrival_datetime,
+                                           arrival_datetime=arrival_datetime,flight_number_id = flight_number,
                                            destination=destination, origin=origin, status=status,
                                            airline_name=airline_name, terminal=terminal, gate=gate)
             ticket.save()
@@ -414,14 +414,14 @@ class BuyTicketsViews(View):
                                  'ticket_no': ticket.ticket_number_random,
                                  'passenger': old_passenger.identification,
                                  'departure_datetime': departure_datetime,
-                                 'arrival_datetime': arrival_datetime,
-                                 'destination': destination,
-                                 'origin': origin,
-                                 'price': old_flight.price,
-                                 'runway': old_flight.runway.runway_number,
-                                 'airline_name': airline_name,
-                                 'terminal': terminal.terminal_number,
-                                 'gate': gate.gate_number})
+                                 'arrival_datetime':arrival_datetime,
+                                 'destination':destination,
+                                 'origin':origin,
+                                 'price':old_flight.price,
+                                 'runway':old_flight.runway.runway_number,
+                                 'airline_name':airline_name,
+                                 'terminal':terminal.terminal_number,
+                                 'gate':gate.gate_number})
 
         except Exception as e:
             return JsonResponse({
@@ -882,7 +882,9 @@ def import_flight_info(request):
 # TODO: 实现打印财务报表功能
 
 
-# 支付宝调用功能
+
+
+#支付宝调用功能
 def pay(request):
     ticket_no = request.POST.get("ticket_no")  # 将订票时提供的机票号传回来，用于后续购买的验证
     fee = request.POST.get("price")
