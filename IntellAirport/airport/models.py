@@ -16,6 +16,7 @@ class Passenger(models.Model):
     username = models.CharField(max_length=20, unique=True, default="Unknown")
     password = models.CharField(max_length=255)
     avatar = models.ImageField(upload_to='avatar', null=True)
+    message = models.CharField(max_length=255, default="None")
 
     class Meta:
         db_table = 'Passenger'
@@ -23,7 +24,7 @@ class Passenger(models.Model):
 
 
 class Luggage(models.Model):
-    luggage_number = models.CharField(max_length=20, primary_key=True)
+    luggage_number = models.AutoField(primary_key=True)
     weight = models.DecimalField(max_digits=3, decimal_places=2)
     status = models.CharField(max_length=20)
     position = models.CharField(max_length=20)

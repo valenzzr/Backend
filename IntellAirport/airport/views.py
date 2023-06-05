@@ -107,26 +107,61 @@ class LoginViews(View):
     def post(self, request):
         json_str = request.body
         data = json.loads(json_str)
+        user_priority = data.get('who')
         name = data.get('name')
         username = data.get('username')
         password = data.get('password')
 
-        try:
-            old_passenger = Passenger.objects.get(username=username, name=name)
-        except Exception as e:
+        if user_priority == 'passenger':
+            try:
+                old_passenger = Passenger.objects.get(username=username, name=name)
+            except Exception as e:
+                return JsonResponse({
+                    'code': 10201, 'error': '用户名或密码错误'
+                })
+
+            p_m = hashlib.md5()
+            p_m.update(password.encode())
+            if p_m.hexdigest() != old_passenger.password:
+                return JsonResponse({
+                    'code': 10202, 'error': '用户名或密码错误'
+                })
+
+            #   记录会话状态
+            #   为旅客生成Token
+            token = make_token(username)
             return JsonResponse({
-                'code': 10201, 'error': '用户名或密码错误'
+                'message': '登录成功', 'username': username, 'data': {'token': token}, 'msg': old_passenger.message
             })
 
-        p_m = hashlib.md5()
-        p_m.update(password.encode())
-        if p_m.hexdigest() != old_passenger.password:
-            return JsonResponse({
-                'code': 10202, 'error': '用户名或密码错误'
-            })
+        elif user_priority == 'manager':
+            try:
+                old_manager = Manager.objects.get(username=username, name=name)
+            except Exception as e:
+                return JsonResponse({
+                    'code': 10201, 'error': '用户名或密码错误'
+                })
+
+            if password != old_manager.password:
+                return JsonResponse({
+                    'code': 10202, 'error': '用户名或密码错误'
+                })
+
+        elif user_priority == 'staff':
+            try:
+                old_staff = Staff.objects.get(username=username, name=name)
+            except Exception as e:
+                return JsonResponse({
+                    'code': 10201, 'error': '用户名或密码错误'
+                })
+
+            if password != old_staff.password:
+                return JsonResponse({
+                    'code': 10202, 'error': '用户名或密码错误'
+                })
 
         # 记录会话状态
-        # Token
+        # 为manager和staff生成token
         token = make_token(username)
         return JsonResponse({
             'message': '登录成功', 'username': username, 'data': {'token': token}
@@ -416,7 +451,6 @@ class AddLuggageViews(View):
     def post(self, request):
         json_str = request.body
         data = json.loads(json_str)
-        luggage_number = data.get('luggage_number')
         weight = self.convert_weight_string(data.get('weight'))
         print(weight)
         if weight > 10.00:
@@ -435,7 +469,7 @@ class AddLuggageViews(View):
                 'error': '不存在该旅客'
             })
         try:
-            luggage = Luggage.objects.create(luggage_number=luggage_number, weight=weight, position=position,
+            luggage = Luggage.objects.create(weight=weight, position=position,
                                              status=status, passenger=passenger)
             luggage.save()
             return JsonResponse({
@@ -628,7 +662,7 @@ class StoresInViews(View):
 
 # 打印报表
 class PrintReportViews(View):
-    def post(self,request):
+    def post(self, request):
         json_str = request.body
         data = request.loads(json_str)
         airline_name = data.get('airline_name')
@@ -804,6 +838,8 @@ def import_flight_info(request):
 # TODO: 实现打印财务报表功能
 
 
+
+
 #支付宝调用功能
 def pay(request):
     ticket_no = request.POST.get("ticket_no")  # 将订票时提供的机票号传回来，用于后续购买的验证
@@ -817,15 +853,15 @@ def pay(request):
         # 支付宝的公钥，验证支付宝回传消息使用，不是你自己的公钥,
         alipay_public_key_string=alipay_public_key_string,
         sign_type="RSA2",  # RSA 或者 RSA2
-        debug= True,
+        debug=True,
         # 默认False  配合沙箱模式使用
     )
 
     # 电脑网站支付，需要跳转到https://openapi.alipaydev.com/gateway.do? + order_string
     order_string = alipay.api_alipay_trade_page_pay(
-        out_trade_no= ticket_no,  # 用票的主键作为订单号
+        out_trade_no=ticket_no,  # 用票的主键作为订单号
         total_amount=str(0.01),  # 将Decimal类型转换为字符串交给支付宝
-        subject= "机票支付",
+        subject="机票支付",
         body="您的机票订单",
         return_url="https://example.com",  # TODO 此处要前端配合写一个网页用于跳转，实现给用户看到的支付完成
         notify_url="https://example.com/notify"  # TODO 此处要前端写一个网页用于将支付宝返回的数据传到后端进行验证，然后后端更新数据
@@ -866,7 +902,7 @@ class PaymentStatusView(View):
             trade_no = data.get('trade_no')
             ticket_no = data.get('out_trade_no')
             try:
-                ticket = Ticket.objects.get(ticket_number_random = ticket_no)
+                ticket = Ticket.objects.get(ticket_number_random=ticket_no)
             except Exception as e:
                 return JsonResponse({
                     'code': 10801,
@@ -879,4 +915,3 @@ class PaymentStatusView(View):
         else:
 
             return JsonResponse({'code': 400, 'errmsg': '请到个人中心的订单中查询订单状态'})
-
