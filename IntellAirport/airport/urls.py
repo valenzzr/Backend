@@ -27,7 +27,7 @@ urlpatterns = [
 
     # 旅客信息
     # 127.0.0.1:8000/api/buyTicket/ 购买机票
-    path('buyticket/', BuyTicketsViews.as_view()),
+    path('buyTicket/', BuyTicketsViews.as_view()),
     # 127.0.0.1:8000/api/searchInformation/ 查询航班信息
     path('searchInformation/', SearchFlightInfoViews.as_view()),
     # 127.0.0.1:8000/api/searchTicket 查询订票信息，并生成电子机票

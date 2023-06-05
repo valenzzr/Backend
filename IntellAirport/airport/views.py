@@ -149,7 +149,7 @@ class LoginViews(View):
 
         elif user_priority == 'staff':
             try:
-                old_staff = Staff.objects.get(username=username, name=name)
+                old_staff = Staff.objects.get(username=username, password=password)
             except Exception as e:
                 return JsonResponse({
                     'code': 10201, 'error': '用户名或密码错误'
@@ -342,6 +342,7 @@ class UpdateFlightPriceViews(View):
             'code': 200, 'message': '调整航班价格成功'
         })
 
+
 class payCarViews(View):
     def post(self, request):
         json_str = request.body
@@ -353,8 +354,8 @@ class payCarViews(View):
             return JsonResponse({
                 'code': 10401, 'error': '不存在该停车位,重新选择'
             })
-        duration = datetime.datetime.now()-parking.start_time
-        fee = duration*10
+        duration = datetime.datetime.now() - parking.start_time
+        fee = duration * 10
         identification = data.get('identification')
         try:
             old_passenger = Passenger.objects.get(identification=identification)
@@ -365,14 +366,16 @@ class payCarViews(View):
         try:
 
             return JsonResponse({'message': '请支付停车位',
-                                 'parking_number':parking_number,
-                                 'fee':fee,
-                                 )
+                                 'parking_number': parking_number,
+                                 'fee': fee, }
+                                )
 
         except Exception as e:
             return JsonResponse({
                 'message': str(e)
             })
+
+
 # 旅客购买机票
 class BuyTicketsViews(View):
     def post(self, request):
@@ -411,14 +414,14 @@ class BuyTicketsViews(View):
                                  'ticket_no': ticket.ticket_number_random,
                                  'passenger': old_passenger.identification,
                                  'departure_datetime': departure_datetime,
-                                 'arrival_datetime':arrival_datetime,
-                                 'destination':destination,
-                                 'origin':origin,
-                                 'price':old_flight.price,
-                                 'runway':old_flight.runway.runway_number,
-                                 'airline_name':airline_name,
-                                 'terminal':terminal.terminal_number,
-                                 'gate':gate.gate_number})
+                                 'arrival_datetime': arrival_datetime,
+                                 'destination': destination,
+                                 'origin': origin,
+                                 'price': old_flight.price,
+                                 'runway': old_flight.runway.runway_number,
+                                 'airline_name': airline_name,
+                                 'terminal': terminal.terminal_number,
+                                 'gate': gate.gate_number})
 
         except Exception as e:
             return JsonResponse({
@@ -718,14 +721,13 @@ class PrintReportViews(View):
             money = 0
             for ticket in Ticket.objects.all():
                 if ticket.flight_number == flight.flight_number:
-                    ticket_num = ticket_num+1
+                    ticket_num = ticket_num + 1
                     money = money + flight.price
             returns[flight.flight_number] = {'flight_number': flight.flight_number,
                                              'airline': airline_name,
                                              'ticket_sold': ticket_num,
                                              'money': money}
         return JsonResponse(returns)
-
 
 
 # 商店销售商品
@@ -880,9 +882,7 @@ def import_flight_info(request):
 # TODO: 实现打印财务报表功能
 
 
-
-
-#支付宝调用功能
+# 支付宝调用功能
 def pay(request):
     ticket_no = request.POST.get("ticket_no")  # 将订票时提供的机票号传回来，用于后续购买的验证
     fee = request.POST.get("price")
@@ -914,6 +914,7 @@ def pay(request):
     url = settings.ALIPAY_URL + "?" + order_string
 
     return JsonResponse({"code": 0, "message": "请求支付成功", "url": url})
+
 
 def pay2(request):
     parking_number = request.POST.get('parking_number')
@@ -990,6 +991,7 @@ class PaymentStatusView(View):
         else:
 
             return JsonResponse({'code': 400, 'errmsg': '请到个人中心的订单中查询订单状态'})
+
 
 class PaymentStatus2View(View):
 
