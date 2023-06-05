@@ -366,7 +366,7 @@ class payCarViews(View):
 
             return JsonResponse({'message': '请支付停车位',
                                  'parking_number':parking_number,
-                                 'fee':fee,
+                                 'fee':fee,}
                                  )
 
         except Exception as e:
@@ -402,7 +402,7 @@ class BuyTicketsViews(View):
             })
         try:
             ticket = Ticket.objects.create(passenger=old_passenger, departure_datetime=departure_datetime,
-                                           arrival_datetime=arrival_datetime,
+                                           arrival_datetime=arrival_datetime,flight_number_id = flight_number,
                                            destination=destination, origin=origin, status=status,
                                            airline_name=airline_name, terminal=terminal, gate=gate)
             ticket.save()
@@ -416,7 +416,7 @@ class BuyTicketsViews(View):
                                  'origin':origin,
                                  'price':old_flight.price,
                                  'runway':old_flight.runway.runway_number,
-                                 'airline_name':airline_name,
+                                 'airline_name':airline_name.name,
                                  'terminal':terminal.terminal_number,
                                  'gate':gate.gate_number})
 
@@ -878,8 +878,6 @@ def import_flight_info(request):
 
 # 打印财务报表
 # TODO: 实现打印财务报表功能
-
-
 
 
 #支付宝调用功能
