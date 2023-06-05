@@ -91,7 +91,7 @@ def check_flight_departure():
             # break
     return "Flight departure check completed"  # 添加返回值
 
-
+'''
 try:
     scheduler = BackgroundScheduler(timezone=settings.TIME_ZONE)  # timezone是用来设置时区的
     scheduler.add_jobstore(DjangoJobStore(), "default")
@@ -110,3 +110,4 @@ except Exception as e:
     print("定时服务错误,已关闭:%s" % e)
     # 有错误就停止定时器
     scheduler.shutdown()
+'''
