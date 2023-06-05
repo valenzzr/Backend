@@ -590,6 +590,19 @@ class TrackLuggageViews(View):
                 'code': 10502, 'message': '未找到该旅客'
             })
 
+        try:
+            tickets = Ticket.objects.get(passenger_id=identification)
+        except Exception as e:
+            return JsonResponse({
+                'code': 10503, 'message': '该旅客未买票'
+            })
+        thirty_minutes = datetime.timedelta(minutes=30)
+        for ticket in tickets:
+            if ticket.arrival_datetime + thirty_minutes <= datetime.datetime.now():
+                return JsonResponse({
+                    'code':10504, 'message': '飞机落地已超过30min'
+                })
+
         luggage_list = Luggage.objects.filter(identification=identification)
         dict1 = {}
         for i in luggage_list:
@@ -600,16 +613,12 @@ class TrackLuggageViews(View):
                 'position': i.position,
                 'passenger_id': i.passenger.identification
             }
-        return JsonResponse({
-            'code': 200,
-            'message': '成功找到您的行李信息',
-            'data': dict1
-        })
+        return JsonResponse(dict1)
 
 
 # 查询当前可用的停车位
 class SearchParkingViews(View):
-    def get(self):
+    def get(self,request):
         all_parking = Parking.objects.all()
         dict1 = {}
         for i in all_parking:
@@ -623,11 +632,7 @@ class SearchParkingViews(View):
                 'code': 10601, 'message': '车位已满'
             })
         else:
-            return JsonResponse({
-                'code': 200,
-                'message': '成功查询到当前空闲车位',
-                'data': dict1
-            })
+            return JsonResponse(dict1)
 
 
 # 预约停车位
