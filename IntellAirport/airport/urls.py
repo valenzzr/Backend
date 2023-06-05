@@ -4,6 +4,7 @@ from . import views
 from .views import *
 
 from django.contrib import admin
+
 app_name = 'airport'
 
 urlpatterns = [
@@ -43,8 +44,6 @@ urlpatterns = [
     # 127.0.0.1:8000/api/confirmRepair/ 等待管理员确认保修，get方法获取需要管员确认的报修，POST返回确认的报修方式
     path('confirmRepair/', ConfirmRepairViews.as_view()),
 
-    # 表单管理
-    # TODO:打印财务报表
 
     # 127.0.0.1:8000/api/searchFlightTime/ 查看航班时刻表（返回当前还未起飞的航班信息）
     path('searchFlightTime/', SearchFlightTimeViews.as_view()),
@@ -58,18 +57,25 @@ urlpatterns = [
     path('storesIn/', StoresInViews.as_view()),
     # 127.0.0.1:8000/api/saleStore/ 商店销售商品
     path('saleStore/', SaleStoreViews.as_view()),
-    #127.0.0.1:8000/api/PayCar/ 支付车位
+    # 127.0.0.1:8000/api/PayCar/ 支付车位
     path('payCar/', payCarViews.as_view()),
+
     # 停车管理
-    # 127.0.0.1:8000/api/searchParking 查询当前可用停车位
+    # 127.0.0.1:8000/api/searchParking/ 查询当前可用停车位
     path('searchParking/', SearchParkingViews.as_view()),
-    # 127.0.0.1:8000/api/reserveParking 预约停车位
+    # 127.0.0.1:8000/api/reserveParking/ 预约停车位
     path('reserveParking/', ReserveParkingViews.as_view()),
-    # 127.0.0.1:8000/api/printReport
+
+    # 表单管理
+    # 127.0.0.1:8000/api/printReport/
     path('printReport/', PrintReportViews.as_view()),
+
+    # 客服功能
+    # 127.0.0.1:8000/api/robot/
+    path('robot/', RobotViews.as_view()),
 
     url(r"^pay/", views.pay, name='pay'),
     url(r"^pay2/", views.pay2, name='pay2'),
-    path('payment/status/',PaymentStatusView.as_view()),
-    path('payment2/status/',PaymentStatus2View.as_view()),
+    path('payment/status/', PaymentStatusView.as_view()),
+    path('payment2/status/', PaymentStatus2View.as_view()),
 ]

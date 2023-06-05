@@ -1,3 +1,4 @@
+import codecs
 import json
 import time
 import datetime
@@ -56,6 +57,55 @@ def print_flight():
         print(flight)
 
 
+import requests
+
+
+class RobotViews(View):
+    def post(self, request):
+        json_str = request.body
+        json_obj = json.loads(json_str)
+        query = json_obj.get('query')
+        access_token = '24.b72c0b644f6d9a77564d9351e1b1da58.2592000.1688532483.282335-33980927'
+        url = 'https://aip.baidubce.com/rpc/2.0/unit/service/chat?access_token=' + access_token
+
+        post_data = {
+            "log_id": "UNITTEST_10000",
+            "version": "2.0",
+            "service_id": "S91806",
+            "session_id": "",
+            "request": {
+                "query": query,
+                "user_id": "88888"
+            },
+            "dialog_state": {
+                "contexts": {
+                    "SYS_REMEMBERED_SKILLS": ["1057"]
+                }
+            }
+        }
+
+        headers = {'content-type': 'application/json'}
+        response = requests.post(url, json=post_data, headers=headers)
+        response.encoding = 'utf-8'
+
+        if response.status_code == 200:
+            # 响应成功，处理数据
+            response_text = response.text  # 获取响应数据（以字符串形式）
+            response_data = json.loads(response_text)  # 解析JSON字符串
+            message = response_data['result']['response_list'][0]['action_list'][0]['say']
+            return JsonResponse({
+                'code': 200,
+                'message': message
+            })
+        else:
+            # 响应失败，输出错误信息
+            print("Error:", response.status_code)
+            return JsonResponse({
+                'code': response.status_code,
+                'error': 'Error occurred during the request'
+            })
+
+
 # 旅客注册功能
 class RegisterViews(View):
     def post(self, request):
@@ -92,7 +142,7 @@ class RegisterViews(View):
                                                  password=p_m.hexdigest())
             passenger.save()
             subject = '注册成功邮件提示'
-            message = '感谢您的注册，您已注册成功!',
+            message = '感谢您的注册，您已注册成功!'
             send_email_celery(request, email, subject, message)
             return JsonResponse({
                 'code': 200,
@@ -114,7 +164,7 @@ class LoginViews(View):
 
         if user_priority == 'passenger':
             try:
-                old_passenger = Passenger.objects.get(username=username, name=name)
+                old_passenger = Passenger.objects.get(username=username)
             except Exception as e:
                 return JsonResponse({
                     'code': 10201, 'error': '用户名或密码错误'
@@ -366,9 +416,9 @@ class payCarViews(View):
         try:
 
             return JsonResponse({'message': '请支付停车位',
-                                 'parking_number':parking_number,
-                                 'fee':fee,}
-                                 )
+                                 'parking_number': parking_number,
+                                 'fee': fee, }
+                                )
 
         except Exception as e:
             return JsonResponse({
@@ -405,7 +455,7 @@ class BuyTicketsViews(View):
             })
         try:
             ticket = Ticket.objects.create(passenger=old_passenger, departure_datetime=departure_datetime,
-                                           arrival_datetime=arrival_datetime,flight_number_id = flight_number,
+                                           arrival_datetime=arrival_datetime, flight_number_id=flight_number,
                                            destination=destination, origin=origin, status=status,
                                            airline_name=airline_name, terminal=terminal, gate=gate)
             ticket.save()
@@ -414,14 +464,14 @@ class BuyTicketsViews(View):
                                  'ticket_no': ticket.ticket_number_random,
                                  'passenger': old_passenger.identification,
                                  'departure_datetime': departure_datetime,
-                                 'arrival_datetime':arrival_datetime,
-                                 'destination':destination,
-                                 'origin':origin,
-                                 'price':old_flight.price,
-                                 'runway':old_flight.runway.runway_number,
-                                 'airline_name':airline_name,
-                                 'terminal':terminal.terminal_number,
-                                 'gate':gate.gate_number})
+                                 'arrival_datetime': arrival_datetime,
+                                 'destination': destination,
+                                 'origin': origin,
+                                 'price': old_flight.price,
+                                 'runway': old_flight.runway.runway_number,
+                                 'airline_name': airline_name,
+                                 'terminal': terminal.terminal_number,
+                                 'gate': gate.gate_number})
 
         except Exception as e:
             return JsonResponse({
@@ -882,9 +932,7 @@ def import_flight_info(request):
 # TODO: 实现打印财务报表功能
 
 
-
-
-#支付宝调用功能
+# 支付宝调用功能
 def pay(request):
     ticket_no = request.POST.get("ticket_no")  # 将订票时提供的机票号传回来，用于后续购买的验证
     fee = request.POST.get("price")

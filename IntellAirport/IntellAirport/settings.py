@@ -167,7 +167,7 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 JWT_TOKEN_KEY = '123456'
-
+DEFAULT_CHARSET = 'utf-8'
 # 发送邮件配置
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 # smpt服务地址
