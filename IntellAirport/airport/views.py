@@ -896,8 +896,8 @@ class SearchFlightTimeViews(View):
                 }
 
 
-# 批量导入航班信息
-def import_flight_info(request):
+# 查询所有可导入航班信息
+def checkArray(request):
     if request.method != 'GET':
         return JsonResponse({
             'code': 10801,
@@ -912,7 +912,6 @@ def import_flight_info(request):
 
     dict1 = {}
     for flight in flight_arr:
-        flight.save()
         dict1[flight.flight_number] = {
             'flight_number': flight.flight_number,
             'flight.origin': flight.origin,
@@ -929,9 +928,37 @@ def import_flight_info(request):
 
     return JsonResponse({
         'code': 200,
-        'message': '当前所有航班信息已经导入',
+        'message': '返回当前所有可导入航班信息',
         'flights': dict1
     })
+
+
+# 通过可导入航班
+def judgeFlight(request):
+    if request.method != 'POST':
+        return JsonResponse({
+            'code': 10801,
+            'error': 'Please use POST！'
+        })
+
+    json_str = request.body
+    data = json.loads(json_str)
+    op = data.get('op')
+    flight_number = data.get('flight_number')
+
+    try:
+        flight = Flight.objects.get(flight_number=flight_number)
+    except Exception as e:
+        return JsonResponse({
+            'code': 10802,
+            'error': '未找到当前航班'
+        })
+
+    if op == 1:  # 通过审批
+        flight.save()
+    elif op == 0:  # 拒绝审批
+        flight.delete()
+
 
 
 # 支付宝调用功能

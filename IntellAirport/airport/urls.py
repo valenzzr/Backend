@@ -47,8 +47,12 @@ urlpatterns = [
 
     # 127.0.0.1:8000/api/searchFlightTime/ 查看航班时刻表（返回当前还未起飞的航班信息）
     path('searchFlightTime/', SearchFlightTimeViews.as_view()),
+    # 127.0.0.1:8000/api/checkArray/ 查看当前可审批的航班
+    path('checkArray/', views.checkArray),
+    # 127.0.0.1:8000/api/judgeFlight/ 审批航班
+    path('judgeFlight/', views.judgeFlight),
     # 127.0.0.1:8000/api/importFlightInfo/ 批量导入航班信息
-    path('importFlightInfo/', views.import_flight_info),
+    # path('importFlightInfo/', views.import_flight_info),
 
     # 商家入驻
     # 127.0.0.1:8000/api/merchantIn/ 商家申请入驻
