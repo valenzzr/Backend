@@ -926,11 +926,7 @@ def checkArray(request):
             'terminal_id': flight.terminal_id
         }
 
-    return JsonResponse({
-        'code': 200,
-        'message': '返回当前所有可导入航班信息',
-        'flights': dict1
-    })
+    return JsonResponse(dict1)
 
 
 # 通过可导入航班
