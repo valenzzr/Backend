@@ -957,7 +957,7 @@ def judgeFlight(request):
     flight_number = data.get('flight_number')
 
     try:
-        if len(flight) == 0:
+        if len(flight_arr) == 0:
             return JsonResponse({
                 'code': 10802,
                 'error': '未找到当前航班'

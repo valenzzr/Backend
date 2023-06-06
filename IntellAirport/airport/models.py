@@ -172,3 +172,6 @@ class Store(models.Model):
     class Meta:
         db_table = 'Store'
         unique_together = ('store_id', 'shop_id', 'store_name')
+
+
+
