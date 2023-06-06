@@ -57,8 +57,12 @@ urlpatterns = [
     # 商家入驻
     # 127.0.0.1:8000/api/merchantIn/ 商家申请入驻
     path('merchantIn/', MerchantInViews.as_view()),
+    # 127.0.0.1：8000/api/queryMerchants/ 查询商家信息
+    path('queryMerchants/', QueryMerchantsViews.as_view()),
     # 127.0.0.1:8000/api/storesIn/ 导入商品
     path('storesIn/', StoresInViews.as_view()),
+    # 127.0.0.1:8000/api/queryStores/ 查询商品信息
+    path('queryStores/', QueryStoresViews.as_view()),
     # 127.0.0.1:8000/api/saleStore/ 商店销售商品
     path('saleStore/', SaleStoreViews.as_view()),
     # 127.0.0.1:8000/api/PayCar/ 支付车位
