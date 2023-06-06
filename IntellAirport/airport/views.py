@@ -341,6 +341,7 @@ class AddFlightViews(View):  # 添加航班信息
                                            status=status, origin=origin, destination=destination,
                                            airline_name=need_airline, terminal=need_terminal, gate=need_gate,
                                            runway=need_runway)
+
             save_flight(flight)
             return JsonResponse({
                 'message': '恭喜您，添加成功！'
@@ -385,7 +386,10 @@ class UpdateFlightPriceViews(View):
             return JsonResponse({
                 'code': 10308, 'error': '更新航班价格'
             })
-
+        if flight.status != 'addSucceeded':
+            return JsonResponse({
+                'code': 10309, 'error': '航班未导入'
+            })
         flight.price = price
         flight.save()
         return JsonResponse({
@@ -438,6 +442,10 @@ class BuyTicketsViews(View):
             return JsonResponse({
                 'code': 10401, 'error': '不存在该航班，请重新选择'
             })
+        if old_flight.status != 'addSucceeded':
+            return JsonResponse({
+                'code': 10402, 'error': '航班未导入'
+            })
         departure_datetime = old_flight.departure_datetime
         arrival_datetime = old_flight.arrival_datetime
         origin = old_flight.origin
@@ -489,6 +497,8 @@ class SearchFlightInfoViews(View):
         flight_list = Flight.objects.filter(origin=origin, destination=destination)  # 查询对应航班
         dict1 = {}
         for i in flight_list:
+            if i.status != 'addSucceeded':
+                continue
             if i.departure_datetime > datetime.datetime.now():  # 如果航班现在没有起飞，则传回该航班
                 dict1[i.flight_number] = {'flight_number': i.flight_number, 'airline_name': i.airline_name.name,
                                           'origin': i.origin, 'destination': i.destination,
@@ -769,6 +779,8 @@ class PrintReportViews(View):
         airline_name = data.get('airline_name')
         flight_all = []
         for flight in Flight.objects.all():
+            if flight.status != 'addSucceeded':
+                continue
             if flight.airline == airline_name:
                 flight_all.append(flight)
         returns = {}
@@ -852,6 +864,8 @@ class SearchFlightTimeViews(View):
         flights = Flight.objects.all()
         dict1 = {}
         for flight in flights:
+            if flight.status != 'addSucceeded':
+                continue
             if flight.departure_datetime > timezone.now():
                 dict1[flight.flight_number] = {
                     'flight_number': flight.flight_number,
@@ -943,19 +957,40 @@ def judgeFlight(request):
     flight_number = data.get('flight_number')
 
     try:
-        flight = Flight.objects.get(flight_number=flight_number)
+        if len(flight) == 0:
+            return JsonResponse({
+                'code': 10802,
+                'error': '未找到当前航班'
+            })
+        for flight in flight_arr:
+            if flight.flight_number == flight_number:
+                flight_arr.remove(flight)
+
     except Exception as e:
         return JsonResponse({
             'code': 10802,
             'error': '未找到当前航班'
         })
-
+    flight = Flight.objects.get(flight_number=flight_number)
+    if flight.status == 'addSucceeded':
+        return JsonResponse({
+            'code':10804,
+            'error':'已添加该航班'
+        })
     if op == 1:  # 通过审批
-        flight.save()
+        flight.status = 'addSucceeded'
+        return JsonResponse({
+            'msg':'OK'
+        })
     elif op == 0:  # 拒绝审批
         flight.delete()
-
-
+        return JsonResponse({
+            'msg':'NO'
+        })
+    else:
+        return JsonResponse({
+            'error':'10803'
+        })
 
 # 支付宝调用功能
 def pay(request):
@@ -977,12 +1012,12 @@ def pay(request):
 
     # 电脑网站支付，需要跳转到https://openapi.alipaydev.com/gateway.do? + order_string
     order_string = alipay.api_alipay_trade_page_pay(
-        out_trade_no=ticket_no,  # 用票的主键作为订单号
-        total_amount=str(fee),  # 将Decimal类型转换为字符串交给支付宝
+        out_trade_no=f'xx{time.time()}',  # 用票的主键作为订单号
+        total_amount=str(0.01),  # 将Decimal类型转换为字符串交给支付宝
         subject="机票支付",
         body="您的机票订单",
         return_url="https://example.com",  # TODO 此处要前端配合写一个网页用于跳转，实现给用户看到的支付完成
-        notify_url="https://example.com/notify"  # TODO 此处要前端写一个网页用于将支付宝返回的数据传到后端进行验证，然后后端更新数据
+        notify_url="127.0.0.1:8000/api/payment/status/"  # TODO 此处要前端写一个网页用于将支付宝返回的数据传到后端进行验证，然后后端更新数据
     )
 
     # 让用户进行支付的支付宝页面网址
@@ -1103,7 +1138,7 @@ class PaymentStatus2View(View):
                     'code': 10801,
                     'error': '车位不存在'
                 })
-            parking.status = '已支付'
+            parking.status = '空闲'
             parking.save()
             # 4. 改变订单状态
             return JsonResponse({'code': 0, 'errmsg': 'ok', 'trade_id': trade_no})
