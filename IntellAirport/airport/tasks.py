@@ -87,7 +87,7 @@ def send_flight_reminder_email(ticket):
 
 
 # 起飞前2小时定时给需要登机的旅客发送邮件
-# @shared_task
+@shared_task
 def check_flight_departure():
     # global email_send
     flights = Flight.objects.all()
