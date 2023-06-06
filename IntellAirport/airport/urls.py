@@ -78,8 +78,6 @@ urlpatterns = [
     # 127.0.0.1:8000/api/robot/
     path('robot/', RobotViews.as_view()),
 
-    url(r"^pay/", views.pay, name='pay'),
-    url(r"^pay2/", views.pay2, name='pay2'),
-    path('payment/status/', PaymentStatusView.as_view()),
-    path('payment2/status/', PaymentStatus2View.as_view()),
+    path('pay/', PaymentStatusView.as_view()),
+    path('pay2/', PaymentStatus2View.as_view()),
 ]
