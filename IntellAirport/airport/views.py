@@ -5,6 +5,7 @@ import time
 import datetime
 import os
 import jwt
+from decimal import Decimal
 from alipay import AliPay
 from django.core.mail import send_mail
 from django.utils import timezone
@@ -1163,9 +1164,22 @@ class PaymentStatus2View(View):
         data = json.loads(json_str)
         card_id = data.get('card_id')
         card_pwd = data.get('card_pwd')
-        need_money = data.get('need_money')
-        parking_number = data.get('parking_number')
+        username = data.get('username')
+        try:
+            passenger = Passenger.objects.get(username=username)
+        except Exception as e:
+            return JsonResponse({'code': 10603,'error': '旅客不存在'})
+        passenger_id = passenger.identification
         flag = 0
+        try:
+            parking = Parking.objects.get(passenger_id=passenger_id)
+        except Exception as e:
+            return JsonResponse({
+                'code': 11004,
+                'error': '支付车位不存在'
+            })
+        time_dif = datetime.datetime.now() - parking.start_time
+        need_money = float(time_dif.total_seconds()/3600)*10
         for i in credit_card:
             if card_id == i['card_number']:
                 flag = 1
@@ -1187,16 +1201,7 @@ class PaymentStatus2View(View):
                 'error': '银行卡号不存在！'
             })
 
-        try:
-            parking = Parking.objects.get(parking_number=parking_number)
-        except Exception as e:
-            for i in credit_card:
-                if card_id == i['card_number']:
-                    i['money'] = i['money'] + need_money
-            return JsonResponse({
-                'code': 11004,
-                'error': '支付车位不存在'
-            })
+
         if parking.status == '空闲':
             for i in credit_card:
                 if card_id == i['card_number']:
