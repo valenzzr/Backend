@@ -482,7 +482,7 @@ class BuyTicketsViews(View):
                                  'origin': origin,
                                  'price': old_flight.price,
                                  'runway': old_flight.runway.runway_number,
-                                 'airline_name': airline_name,
+                                 'airline_name': airline_name.name,
                                  'terminal': terminal.terminal_number,
                                  'gate': gate.gate_number})
 
