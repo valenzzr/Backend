@@ -653,11 +653,13 @@ class SearchParkingViews(View):
 
 # 预约停车位
 class ReserveParkingViews(View):
+    @method_decorator(logging_check)
     def post(self, request):
         json_str = request.body
         data = json.loads(json_str)
         parking_number = data.get('parking_number')
-        passenger_id = data.get('passenger_id')
+        user = request.myuser
+        passenger_id = user.identification
         try:
             parking = Parking.objects.get(parking_number=parking_number)
         except Exception as e:
