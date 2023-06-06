@@ -686,9 +686,15 @@ class RepairViews(View):
     def post(self, request):
         dev_id = request.POST.get('dev_id')
         dev_name = request.POST.get('dev_name')
-        dev_image = request.POST.FILES['devices']
+        dev_image = request.FILES['devices']
         status = 'Waiting repair'
-        dev = Device.objects.create(dev_id=dev_id, dev_name=dev_name, image=dev_image, status=status)
+        try:
+            dev = Device.objects.create(dev_id=dev_id, dev_name=dev_name, image=dev_image, status=status)
+        except Exception as e:
+            return JsonResponse({
+                'code': 10903,
+                'error': 'failed create device!'
+            })
         dev.save()
         return JsonResponse({
             'message': '添加成功'
