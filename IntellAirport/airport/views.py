@@ -684,11 +684,9 @@ class ReserveParkingViews(View):
 # 报修设备和设施(附带图片)
 class RepairViews(View):
     def post(self, request):
-        json_str = request.body
-        data = json.loads(json_str)
-        dev_id = data.get('dev_id')
-        dev_name = data.get('dev_name')
-        dev_image = request.FILES['devices']
+        dev_id = request.POST.get('dev_id')
+        dev_name = request.POST.get('dev_name')
+        dev_image = request.POST.FILES['devices']
         status = 'Waiting repair'
         dev = Device.objects.create(dev_id=dev_id, dev_name=dev_name, image=dev_image, status=status)
         dev.save()
@@ -770,20 +768,40 @@ class QueryMerchantsViews(View):
         return JsonResponse(dict1)
 
 
+# 上传商品图片
+def stores_image(request, store_id, shop_id):
+    if request.methode != 'POST':
+        return JsonResponse({
+            'code': 10900,
+            'error': 'Please use POST'
+        })
+
+    store_image = request.FILES.get('store')
+    try:
+        store = Store.objects.get(store_id=store_id,shop_id_id=shop_id)
+    except Exception as e:
+        return JsonResponse({
+            'code': 10902,
+            'error': 'failed upload!'
+        })
+    store.store_image = store_image
+    return store_image
+
+
 # 导入商品
 class StoresInViews(View):
     def post(self, request):
-        json_str = request.body
-        data = json.loads(json_str)
-        store_id = data.get('store_id')
-        store_name = data.get('store_name')
-        store_image = request.FILES.get('store')
-        shop_id = data.get('shop_id')
+        store_id = request.POST.get('store_id')
+        store_name = request.POST.get('store_name')
+        store_image = request.FILES['stores']
+        shop_id = request.POST.get('shop_id')
 
         try:
-            store = Store.objects.create(store_id=store_id, store_name=store_name, shop_id=shop_id,
+            # store_image_data = store_image.read().decode('utf-8')
+            store = Store.objects.create(store_id=store_id, store_name=store_name, shop_id_id=shop_id,
                                          store_image=store_image)
         except Exception as e:
+            print(e)
             return JsonResponse({
                 'code': 10703,
                 'error': '商品导入失败'
