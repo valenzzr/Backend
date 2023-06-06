@@ -685,12 +685,14 @@ class ReserveParkingViews(View):
 # 报修设备和设施(附带图片)
 class RepairViews(View):
     def post(self, request):
+        json_str = request.body
+        data = json.loads(json_str)
         dev_id = request.POST.get('dev_id')
         dev_name = request.POST.get('dev_name')
-        dev_image = request.FILES['devices']
+        # dev_image = request.FILES['devices']
         status = 'Waiting repair'
         try:
-            dev = Device.objects.create(dev_id=dev_id, dev_name=dev_name, image=dev_image, status=status)
+            dev = Device.objects.create(dev_id=dev_id, dev_name=dev_name, status=status)
         except Exception as e:
             return JsonResponse({
                 'code': 10903,
