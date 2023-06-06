@@ -1,3 +1,4 @@
+import base64
 import codecs
 import json
 import time
@@ -821,13 +822,51 @@ class StoresInViews(View):
         })
 
 
+# 返回商店商品
+class StoresInShopViews(View):
+    def post(self, request):
+        json_str = request.body
+        data = json.loads(json_str)
+        shop_id = data.get('shop_id')
+        try:
+            shop = Shop.objects.get(id=shop_id)
+        except Exception as e:
+            return JsonResponse({
+                'code': 10704,
+                'error': '没有找到对应商店!'
+            })
+
+        stores = Store.objects.filter(shop_id_id=shop_id)
+        if not stores:
+            return JsonResponse({
+                'code': 10705,
+                'error': '当前商店空空如也!'
+            })
+        dict1 = {}
+        for store in stores:
+            image_filename = store.store_image.path  # 从数据库中获取相对地址的图片名称
+            image_path = os.path.join(settings.MEDIA_ROOT, image_filename)
+
+            with open(image_path, 'rb') as f:
+                encoded_image = base64.b64encode(f.read()).decode('utf-8')
+
+            dict1[store.store_id] = {
+                'store_id': store.store_id,
+                'store_name': store.store_name,
+                'store_image': encoded_image,
+                'shop_id': store.shop_id_id
+            }
+
+        return JsonResponse(dict1)
+
+
 # 查询所有商品
 class QueryStoresViews(View):
     def get(self, request):
         stores = Store.objects.all()
         if not stores:
             return JsonResponse({
-                'code': 10704,
+                'code': 10705,
                 'error': '当前还没有导入任何商品'
             })
 

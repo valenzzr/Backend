@@ -65,6 +65,8 @@ urlpatterns = [
     path('queryStores/', QueryStoresViews.as_view()),
     # 127.0.0.1:8000/api/saleStore/ 商店销售商品
     path('saleStore/', SaleStoreViews.as_view()),
+    # 127.0.0.1:8000/api/storesInShop/ 商店显示商品
+    path('storesInShop/', StoresInShopViews.as_view()),
     # 127.0.0.1:8000/api/PayCar/ 支付车位
     path('payCar/', payCarViews.as_view()),
 
