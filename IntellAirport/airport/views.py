@@ -21,9 +21,10 @@ import hashlib
 # Create your views here.
 flight_arr = []
 
-credit_card = [{'card_number':'54387609','password':'asdfg','money':200.00},
-               {'card_number':'87651093','password':'qwert','money':109000.02},
-               {'card_number':'76452983','password':'zxcvb','money':230000.03}]
+credit_card = [{'card_number': '54387609', 'password': 'asdfg', 'money': 200.00},
+               {'card_number': '87651093', 'password': 'qwert', 'money': 109000.02},
+               {'card_number': '76452983', 'password': 'zxcvb', 'money': 230000.03}]
+
 
 # 生成登录令牌用于记录会话状态
 def make_token(username, expire=3600 * 24):
@@ -747,6 +748,28 @@ class MerchantInViews(View):
         })
 
 
+# 查询所有商家
+class QueryMerchantsViews(View):
+    def get(self, request):
+        merchants = Shop.objects.all()
+        if not merchants:
+            return JsonResponse({
+                'code': 10702,
+                'error': '当前没有入驻的商家'
+            })
+
+        dict1 = {}
+
+        for merchant in merchants:
+            dict1[merchant.id] = {
+                'id': merchant.id,
+                'name': merchant.name,
+                'contact_number': merchant.contact_number
+            }
+
+        return JsonResponse(dict1)
+
+
 # 导入商品
 class StoresInViews(View):
     def post(self, request):
@@ -762,7 +785,7 @@ class StoresInViews(View):
                                          store_image=store_image)
         except Exception as e:
             return JsonResponse({
-                'code': 10702,
+                'code': 10703,
                 'error': '商品导入失败'
             })
 
@@ -772,6 +795,29 @@ class StoresInViews(View):
             'code': 200,
             'message': '商品导入成功'
         })
+
+
+# 查询所有商品
+class QueryStoresViews(View):
+    def get(self, request):
+        stores = Store.objects.all()
+        if not stores:
+            return JsonResponse({
+                'code': 10704,
+                'error': '当前还没有导入任何商品'
+            })
+
+        dict1 = {}
+
+        for store in stores:
+            dict1[store.id] = {
+                'id': store.id,
+                'store_id': store.store_id,
+                'store_name': store.store_name,
+                'shop_id': store.shop_id_id
+            }
+
+        return JsonResponse(dict1)
 
 
 # 打印报表
@@ -977,27 +1023,27 @@ def judgeFlight(request):
     flight = Flight.objects.get(flight_number=flight_number)
     if flight.status == 'addSucceeded':
         return JsonResponse({
-            'code':10804,
-            'error':'已添加该航班'
+            'code': 10804,
+            'error': '已添加该航班'
         })
     if op == 1:  # 通过审批
         flight.status = 'addSucceeded'
         return JsonResponse({
-            'msg':'OK'
+            'msg': 'OK'
         })
     elif op == 0:  # 拒绝审批
         flight.delete()
         return JsonResponse({
-            'msg':'NO'
+            'msg': 'NO'
         })
     else:
         return JsonResponse({
-            'error':'10803'
+            'error': '10803'
         })
 
 
 class PaymentStatusView(View):
-    def post(self,request):
+    def post(self, request):
         json_str = request.body
         data = json.loads(json_str)
         card_id = data.get('card_id')
@@ -1010,20 +1056,20 @@ class PaymentStatusView(View):
                 flag = 1
                 if card_pwd != i['password']:
                     return JsonResponse({
-                        'code':11001,
-                        'error':'密码错误！'
+                        'code': 11001,
+                        'error': '密码错误！'
                     })
                 if need_money > i['money']:
                     return JsonResponse({
-                        'code':11002,
-                        'error':'余额不足！'
+                        'code': 11002,
+                        'error': '余额不足！'
                     })
                 i['money'] = i['money'] - need_money
                 print(i['money'])
         if flag == 0:
             return JsonResponse({
-                'code':11003,
-                'error':'银行卡号不存在！'
+                'code': 11003,
+                'error': '银行卡号不存在！'
             })
 
         try:
@@ -1039,7 +1085,6 @@ class PaymentStatusView(View):
         ticket.status = "已支付"
         ticket.save()
         return JsonResponse({'code': 0, 'errmsg': 'ok'})
-
 
 
 class PaymentStatus2View(View):
@@ -1093,5 +1138,3 @@ class PaymentStatus2View(View):
         parking.status = "空闲"
         parking.save()
         return JsonResponse({'code': 0, 'errmsg': 'ok'})
-
-
