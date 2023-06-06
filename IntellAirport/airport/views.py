@@ -748,7 +748,7 @@ class MerchantInViews(View):
 class StoresInViews(View):
     def post(self, request):
         json_str = request.body
-        data = request.loads(json_str)
+        data = json.loads(json_str)
         store_id = data.get('store_id')
         store_name = data.get('store_name')
         store_image = request.FILES['stores']
@@ -775,20 +775,20 @@ class StoresInViews(View):
 class PrintReportViews(View):
     def post(self, request):
         json_str = request.body
-        data = request.loads(json_str)
+        data = json.loads(json_str)
         airline_name = data.get('airline_name')
         flight_all = []
         for flight in Flight.objects.all():
             if flight.status != 'addSucceeded':
                 continue
-            if flight.airline == airline_name:
+            if flight.airline_name_id == airline_name:
                 flight_all.append(flight)
         returns = {}
         for flight in flight_all:
             ticket_num = 0
             money = 0
             for ticket in Ticket.objects.all():
-                if ticket.flight_number == flight.flight_number:
+                if ticket.flight_number_id == flight.flight_number:
                     ticket_num = ticket_num + 1
                     money = money + flight.price
             returns[flight.flight_number] = {'flight_number': flight.flight_number,
@@ -957,7 +957,7 @@ def judgeFlight(request):
     flight_number = data.get('flight_number')
 
     try:
-        if len(flight) == 0:
+        if len(flight_arr) == 0:
             return JsonResponse({
                 'code': 10802,
                 'error': '未找到当前航班'
