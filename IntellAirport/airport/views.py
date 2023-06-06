@@ -687,8 +687,8 @@ class RepairViews(View):
     def post(self, request):
         json_str = request.body
         data = json.loads(json_str)
-        dev_id = request.POST.get('dev_id')
-        dev_name = request.POST.get('dev_name')
+        dev_id = data.get('dev_id')
+        dev_name = data.get('dev_name')
         # dev_image = request.FILES['devices']
         status = 'Waiting repair'
         try:
