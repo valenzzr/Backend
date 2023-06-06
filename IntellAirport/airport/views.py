@@ -729,9 +729,9 @@ class MerchantInViews(View):
     def post(self, request):
         json_str = request.body
         data = json.loads(json_str)
-        shop_id = data.post('id')
-        shop_name = data.post('name')
-        shop_contact_number = data.post('contact_number')
+        shop_id = data.get('id')
+        shop_name = data.get('name')
+        shop_contact_number = data.get('contact_number')
 
         try:
             shop = Shop.objects.create(id=shop_id, name=shop_name, contact_number=shop_contact_number)
@@ -777,7 +777,7 @@ class StoresInViews(View):
         data = json.loads(json_str)
         store_id = data.get('store_id')
         store_name = data.get('store_name')
-        store_image = request.FILES['stores']
+        store_image = request.FILES['store']
         shop_id = data.get('shop_id')
 
         try:
