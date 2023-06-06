@@ -1201,3 +1201,4 @@ class PaymentStatus2View(View):
         parking.status = "空闲"
         parking.save()
         return JsonResponse({'code': 0, 'errmsg': 'ok'})
+
