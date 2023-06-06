@@ -659,7 +659,7 @@ class ReserveParkingViews(View):
         parking_number = data.get('parking_number')
         username = data.get('username')
         try:
-            passenger = Passenger.objects.get(username = username)
+            passenger = Passenger.objects.get(username=username)
         except Exception as e:
             return JsonResponse({'code': 10603,'error': '旅客不存在'})
         passenger_id = passenger.identification
@@ -679,7 +679,6 @@ class ReserveParkingViews(View):
         parking.status = '占用'
         parking.passenger_id = passenger_id
         parking.start_time = datetime.datetime.now()
-        parking.duration = "None"
         parking.save()
 
         return JsonResponse({
