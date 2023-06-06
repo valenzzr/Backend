@@ -683,15 +683,15 @@ class ReserveParkingViews(View):
 # 报修设备和设施(附带图片)
 class RepairViews(View):
     def post(self, request):
-        json_str = request.body
-        data = json.loads(json_str)
-        dev_id = data.get('dev_id')
-        dev_name = data.get('dev_name')
-        dev_image = request.FILES['devices']
+        dev_id = request.POST.get('dev_id')
+        dev_name = request.POST.get('dev_name')
+        dev_image = request.POST.get('dev_image')
+        print(dev_image)
         status = 'Waiting repair'
-        dev = Device.objects.create(dev_id=dev_id, dev_name=dev_name, image=dev_image, status=status)
+        dev = Device.objects.create(dev_id=dev_id, dev_name=dev_name,dev_image = dev_image, status=status)
         dev.save()
         return JsonResponse({
+
             'message': '添加成功'
         })
 
