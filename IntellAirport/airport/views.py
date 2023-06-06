@@ -777,7 +777,7 @@ class StoresInViews(View):
         data = json.loads(json_str)
         store_id = data.get('store_id')
         store_name = data.get('store_name')
-        store_image = request.FILES['store']
+        store_image = request.FILES.get('store')
         shop_id = data.get('shop_id')
 
         try:
