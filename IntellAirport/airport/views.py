@@ -1181,7 +1181,7 @@ class PaymentStatus2View(View):
                 'error': '支付车位不存在'
             })
         time_dif = datetime.datetime.now() - parking.start_time
-        need_money = float(time_dif.total_seconds()/3600)*10
+        need_money = float(time_dif.total_seconds()/3600)*1000
         for i in credit_card:
             if card_id == i['card_number']:
                 flag = 1
