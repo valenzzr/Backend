@@ -487,7 +487,7 @@ class BuyTicketsViews(View):
                                  'terminal': terminal.terminal_number,
                                  'gate': gate.gate_number})
 
-        except Exception as e:
+        except IntegrityError as e:
             return JsonResponse({
                 'message': str(e)
             })
@@ -803,6 +803,7 @@ def stores_image(request, store_id, shop_id):
     return store_image
 
 
+
 # 导入商品
 class StoresInViews(View):
     def post(self, request):
@@ -810,6 +811,12 @@ class StoresInViews(View):
         store_name = request.POST.get('store_name')
         store_image = request.FILES['stores']
         shop_id = request.POST.get('shop_id')
+
+        # img = request.FILES.get("file")
+        data = base64.b64encode(store_image.read())
+        file_url = 'data:image/png;base64,{}'.format(data)
+        file_url = file_url.replace("b'", '').replace("'", '')
+        res = {"status": 0, "msg": "图片上传成功", "file_path": file_url}
 
         try:
             # store_image_data = store_image.read().decode('utf-8')
@@ -826,46 +833,77 @@ class StoresInViews(View):
 
         return JsonResponse({
             'code': 200,
-            'message': '商品导入成功'
+            'message': '商品导入成功',
+            'res': res
         })
 
 
-# 返回商店商品
 class StoresInShopViews(View):
     def post(self, request):
-        json_str = request.body
-        data = json.loads(json_str)
-        shop_id = data.get('shop_id')
+        store_id = request.POST.get('store_id')
+        store_name = request.POST.get('store_name')
+        store_image = request.FILES['stores']
+        shop_id = request.POST.get('shop_id')
+
         try:
-            shop = Shop.objects.get(id=shop_id)
+            # Convert the image to base64
+            image_data = store_image.read()
+            encoded_image = base64.b64encode(image_data)
+            str_image = encoded_image.decode()
+
+            # Create the store
+            store = Store.objects.create(store_id=store_id, store_name=store_name, shop_id_id=shop_id,
+                                         store_image=str_image)
         except Exception as e:
+            print(e)
             return JsonResponse({
-                'code': 10704,
-                'error': '没有找到对应商店!'
+                'code': 10703,
+                'error': '商品导入失败'
             })
 
-        stores = Store.objects.filter(shop_id_id=shop_id)
-        if not stores:
-            return JsonResponse({
-                'code': 10705,
-                'error': '当前商店空空如也!'
-            })
-        dict1 = {}
-        for store in stores:
-            image_filename = store.store_image.path  # 从数据库中获取相对地址的图片名称
-            image_path = os.path.join(settings.MEDIA_ROOT, image_filename)
+        store.save()
 
-            with open(image_path, 'rb') as f:
-                encoded_image = base64.b64encode(f.read()).decode('utf-8')
+        return JsonResponse({
+            'code': 200,
+            'message': '商品导入成功'
+        })
 
-            dict1[store.store_id] = {
-                'store_id': store.store_id,
-                'store_name': store.store_name,
-                'store_image': encoded_image,
-                'shop_id': store.shop_id_id
-            }
-
-        return JsonResponse(dict1)
+# 返回商店商品
+# class StoresInShopViews(View):
+#     def post(self, request):
+#         json_str = request.body
+#         data = json.loads(json_str)
+#         shop_id = data.get('shop_id')
+#         try:
+#             shop = Shop.objects.get(id=shop_id)
+#         except Exception as e:
+#             return JsonResponse({
+#                 'code': 10704,
+#                 'error': '没有找到对应商店!'
+#             })
+#
+#         stores = Store.objects.filter(shop_id_id=shop_id)
+#         if not stores:
+#             return JsonResponse({
+#                 'code': 10705,
+#                 'error': '当前商店空空如也!'
+#             })
+#         dict1 = {}
+#         for store in stores:
+#             image_filename = store.store_image.path  # 从数据库中获取相对地址的图片名称
+#             image_path = os.path.join(settings.MEDIA_ROOT, image_filename)
+#
+#             with open(image_path, 'rb') as f:
+#                 encoded_image = base64.b64encode(f.read()).decode('utf-8')
+#
+#             dict1[store.store_id] = {
+#                 'store_id': store.store_id,
+#                 'store_name': store.store_name,
+#                 'store_image': encoded_image,
+#                 'shop_id': store.shop_id_id
+#             }
+#
+#         return JsonResponse(dict1)
 
 
 # 查询所有商品

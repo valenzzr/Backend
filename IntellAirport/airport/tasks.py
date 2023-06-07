@@ -124,17 +124,24 @@ def check_flight_departure():
     return "Flight departure check completed"  # 添加返回值
 
 
-@shared_task
-def restart_celery_beat():
-    process = Popen(['pkill', '-f', 'celery beat'], stdout=PIPE, stderr=PIPE)
-    process.communicate()
-    process = Popen(['celery', '-A', 'IntellAirport', 'beat', '-l', 'info'], stdout=PIPE, stderr=PIPE)
-    process.communicate()
-
-
-@receiver([post_save, post_delete], sender=Ticket)
-def notify_database_change(sender, **kwargs):
-    restart_celery_beat()
+# from subprocess import Popen, PIPE
+#
+#
+# @shared_task
+# def restart_celery_beat():
+#     process = Popen(['taskkill', '/f', '/im', 'celery.exe'], stdout=PIPE, stderr=PIPE)
+#     process.communicate()
+#     process = Popen(['celery', '-A', 'IntellAirport', 'beat', '-l', 'info'], stdout=PIPE, stderr=PIPE, shell=True)
+#     process.communicate()
+#
+#
+# from django.dispatch import receiver
+# from django.db.models.signals import post_save, post_delete
+#
+#
+# @receiver([post_save, post_delete], sender=Ticket)
+# def notify_database_change(sender, **kwargs):
+#     restart_celery_beat()
 
 # 使用apscheduler实现的定时任务，感觉很难处理并发啊
 # try:

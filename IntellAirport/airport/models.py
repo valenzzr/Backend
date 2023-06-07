@@ -171,7 +171,7 @@ class Store(models.Model):
     store_id = models.CharField(max_length=20)
     shop_id = models.ForeignKey(Shop, on_delete=models.CASCADE, to_field='id')
     store_name = models.CharField(max_length=20)
-    store_image = models.ImageField(upload_to='stores', null=True)
+    store_image = models.TextField(blank=True, null=True)
 
     class Meta:
         db_table = 'Store'
