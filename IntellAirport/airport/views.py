@@ -1099,6 +1099,7 @@ def judgeFlight(request):
         })
     if op == 1:  # 通过审批
         flight.status = 'addSucceeded'
+        flight.save()
         return JsonResponse({
             'msg': 'OK'
         })
@@ -1120,6 +1121,8 @@ class PaymentStatusView(View):
         card_id = data.get('card_id')
         card_pwd = data.get('card_pwd')
         need_money = data.get('need_money')
+        need_money = float(need_money)
+        
         ticket_no = data.get('ticket_no')
         flag = 0
         for i in credit_card:
