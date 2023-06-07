@@ -65,21 +65,21 @@ def print_flight():
 
 import requests
 
-
 import random
 
 messages = ["Hello!", "How are you?", "Good morning!", "Have a nice day!"]
 
+
 def get_random_message(messages):
     return random.choice(messages)
+
 
 random_message = get_random_message(messages)
 print(random_message)
 
+
 def get_random_message(messages):
     return random.choice(messages)
-
-
 
 
 class RobotViews(View):
@@ -88,20 +88,17 @@ class RobotViews(View):
         json_obj = json.loads(json_str)
         query = json_obj.get('query')
 
-
         response_dict = {
-                "您好": "你好，我是百度机器人。",
-                "你叫什么名字": "我是百度机器人。",
-                "今天天气如何": "抱歉，我无法提供天气信息。",
-                "如何购买机票": "点击购买机票按钮购买机票"
-        }       # 添加更多的键值对，根据需要进行回复
-
+            "您好": "你好，我是百度机器人。",
+            "你叫什么名字": "我是百度机器人。",
+            "今天天气如何": "抱歉，我无法提供天气信息。",
+            "如何购买机票": "点击购买机票按钮购买机票"
+        }  # 添加更多的键值对，根据需要进行回复
 
         if query in response_dict:
-            return JsonResponse({'msg' : response_dict[query]})
+            return JsonResponse({'msg': response_dict[query]})
         else:
-            return JsonResponse({'msg' : '对不起，我无法理解您的请求。'})
-
+            return JsonResponse({'msg': '对不起，我无法理解您的请求。'})
 
 
 # 旅客注册功能
@@ -179,7 +176,8 @@ class LoginViews(View):
             #   为旅客生成Token
             token = make_token(username)
             return JsonResponse({
-                'message': '登录成功', 'username': username, 'data': {'token': token}, 'msg': old_passenger.message
+                'message': '登录成功', 'username': username, 'email': old_passenger.email,
+                'phone_number': old_passenger.phone_number, 'data': {'token': token}, 'msg': old_passenger.message
             })
 
         elif user_priority == 'manager':
@@ -467,7 +465,7 @@ class BuyTicketsViews(View):
             ticket.save()
         except Exception as e:
             try:
-                ticket = Ticket.objects.get(passenger = old_passenger)
+                ticket = Ticket.objects.get(passenger=old_passenger)
             except Exception as e:
                 return JsonResponse({
                     'code': 10405, 'error': '旅客只能买一张票！'
@@ -484,8 +482,6 @@ class BuyTicketsViews(View):
                                  'airline_name': airline_name.name,
                                  'terminal': terminal.terminal_number,
                                  'gate': gate.gate_number})
-
-
 
 
 # 查询航班信息
@@ -657,7 +653,7 @@ class ReserveParkingViews(View):
         try:
             passenger = Passenger.objects.get(username=username)
         except Exception as e:
-            return JsonResponse({'code': 10603,'error': '旅客不存在'})
+            return JsonResponse({'code': 10603, 'error': '旅客不存在'})
         passenger_id = passenger.identification
 
         try:
@@ -788,7 +784,7 @@ def stores_image(request, store_id, shop_id):
 
     store_image = request.FILES.get('store')
     try:
-        store = Store.objects.get(store_id=store_id,shop_id_id=shop_id)
+        store = Store.objects.get(store_id=store_id, shop_id_id=shop_id)
     except Exception as e:
         return JsonResponse({
             'code': 10902,
@@ -798,42 +794,41 @@ def stores_image(request, store_id, shop_id):
     return store_image
 
 
-
 # 导入商品
+# class StoresInViews(View):
+#     def post(self, request):
+#         store_id = request.POST.get('store_id')
+#         store_name = request.POST.get('store_name')
+#         store_image = request.FILES['stores']
+#         shop_id = request.POST.get('shop_id')
+#
+#         # img = request.FILES.get("file")
+#         data = base64.b64encode(store_image.read())
+#         file_url = 'data:image/png;base64,{}'.format(data)
+#         file_url = file_url.replace("b'", '').replace("'", '')
+#         res = {"status": 0, "msg": "图片上传成功", "file_path": file_url}
+#
+#         try:
+#             # store_image_data = store_image.read().decode('utf-8')
+#             store = Store.objects.create(store_id=store_id, store_name=store_name, shop_id_id=shop_id,
+#                                          store_image=store_image)
+#         except Exception as e:
+#             print(e)
+#             return JsonResponse({
+#                 'code': 10703,
+#                 'error': '商品导入失败'
+#             })
+#
+#         store.save()
+#
+#         return JsonResponse({
+#             'code': 200,
+#             'message': '商品导入成功',
+#             'res': res
+#         })
+
+
 class StoresInViews(View):
-    def post(self, request):
-        store_id = request.POST.get('store_id')
-        store_name = request.POST.get('store_name')
-        store_image = request.FILES['stores']
-        shop_id = request.POST.get('shop_id')
-
-        # img = request.FILES.get("file")
-        data = base64.b64encode(store_image.read())
-        file_url = 'data:image/png;base64,{}'.format(data)
-        file_url = file_url.replace("b'", '').replace("'", '')
-        res = {"status": 0, "msg": "图片上传成功", "file_path": file_url}
-
-        try:
-            # store_image_data = store_image.read().decode('utf-8')
-            store = Store.objects.create(store_id=store_id, store_name=store_name, shop_id_id=shop_id,
-                                         store_image=store_image)
-        except Exception as e:
-            print(e)
-            return JsonResponse({
-                'code': 10703,
-                'error': '商品导入失败'
-            })
-
-        store.save()
-
-        return JsonResponse({
-            'code': 200,
-            'message': '商品导入成功',
-            'res': res
-        })
-
-
-class StoresInShopViews(View):
     def post(self, request):
         store_id = request.POST.get('store_id')
         store_name = request.POST.get('store_name')
@@ -863,42 +858,43 @@ class StoresInShopViews(View):
             'message': '商品导入成功'
         })
 
+
 # 返回商店商品
-# class StoresInShopViews(View):
-#     def post(self, request):
-#         json_str = request.body
-#         data = json.loads(json_str)
-#         shop_id = data.get('shop_id')
-#         try:
-#             shop = Shop.objects.get(id=shop_id)
-#         except Exception as e:
-#             return JsonResponse({
-#                 'code': 10704,
-#                 'error': '没有找到对应商店!'
-#             })
-#
-#         stores = Store.objects.filter(shop_id_id=shop_id)
-#         if not stores:
-#             return JsonResponse({
-#                 'code': 10705,
-#                 'error': '当前商店空空如也!'
-#             })
-#         dict1 = {}
-#         for store in stores:
-#             image_filename = store.store_image.path  # 从数据库中获取相对地址的图片名称
-#             image_path = os.path.join(settings.MEDIA_ROOT, image_filename)
-#
-#             with open(image_path, 'rb') as f:
-#                 encoded_image = base64.b64encode(f.read()).decode('utf-8')
-#
-#             dict1[store.store_id] = {
-#                 'store_id': store.store_id,
-#                 'store_name': store.store_name,
-#                 'store_image': encoded_image,
-#                 'shop_id': store.shop_id_id
-#             }
-#
-#         return JsonResponse(dict1)
+class StoresInShopViews(View):
+    def post(self, request):
+        json_str = request.body
+        data = json.loads(json_str)
+        shop_id = data.get('shop_id')
+        try:
+            shop = Shop.objects.get(id=shop_id)
+        except Exception as e:
+            return JsonResponse({
+                'code': 10704,
+                'error': '没有找到对应商店!'
+            })
+
+        stores = Store.objects.filter(shop_id_id=shop_id)
+        if not stores:
+            return JsonResponse({
+                'code': 10705,
+                'error': '当前商店空空如也!'
+            })
+        dict1 = {}
+        for store in stores:
+            # image_filename = store.store_image.path  # 从数据库中获取相对地址的图片名称
+            # image_path = os.path.join(settings.MEDIA_ROOT, image_filename)
+
+            # with open(image_path, 'rb') as f:
+            #     encoded_image = base64.b64encode(f.read()).decode('utf-8')
+
+            dict1[store.store_id] = {
+                'store_id': store.store_id,
+                'store_name': store.store_name,
+                'store_image': store.store_image,
+                'shop_id': store.shop_id_id
+            }
+
+        return JsonResponse(dict1)
 
 
 # 查询所有商品
@@ -1208,7 +1204,7 @@ class PaymentStatus2View(View):
         try:
             passenger = Passenger.objects.get(username=username)
         except Exception as e:
-            return JsonResponse({'code': 10603,'error': '旅客不存在'})
+            return JsonResponse({'code': 10603, 'error': '旅客不存在'})
         passenger_id = passenger.identification
         flag = 0
         try:
@@ -1219,8 +1215,8 @@ class PaymentStatus2View(View):
                 'error': '支付车位不存在'
             })
         time_dif = datetime.datetime.now() - parking.start_time
-        need_money = float(time_dif.total_seconds()/3600)*1000
-        need_money = round(need_money,2)
+        need_money = float(time_dif.total_seconds() / 3600) * 1000
+        need_money = round(need_money, 2)
         for i in credit_card:
             if card_id == i['card_number']:
                 flag = 1
@@ -1242,7 +1238,6 @@ class PaymentStatus2View(View):
                 'error': '银行卡号不存在！'
             })
 
-
         if parking.status == '空闲':
             for i in credit_card:
                 if card_id == i['card_number']:
@@ -1253,5 +1248,4 @@ class PaymentStatus2View(View):
             })
         parking.status = "空闲"
         parking.save()
-        return JsonResponse({'code': 0, 'errmsg': 'ok','money': need_money})
-
+        return JsonResponse({'code': 0, 'errmsg': 'ok', 'money': need_money})
