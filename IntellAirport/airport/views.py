@@ -66,50 +66,42 @@ def print_flight():
 import requests
 
 
+import random
+
+messages = ["Hello!", "How are you?", "Good morning!", "Have a nice day!"]
+
+def get_random_message(messages):
+    return random.choice(messages)
+
+random_message = get_random_message(messages)
+print(random_message)
+
+def get_random_message(messages):
+    return random.choice(messages)
+
+
+
+
 class RobotViews(View):
     def post(self, request):
         json_str = request.body
         json_obj = json.loads(json_str)
         query = json_obj.get('query')
-        access_token = '24.b72c0b644f6d9a77564d9351e1b1da58.2592000.1688532483.282335-33980927'
-        url = 'https://aip.baidubce.com/rpc/2.0/unit/service/chat?access_token=' + access_token
 
-        post_data = {
-            "log_id": "UNITTEST_10000",
-            "version": "2.0",
-            "service_id": "S91806",
-            "session_id": "",
-            "request": {
-                "query": query,
-                "user_id": "88888"
-            },
-            "dialog_state": {
-                "contexts": {
-                    "SYS_REMEMBERED_SKILLS": ["1057"]
-                }
-            }
-        }
 
-        headers = {'content-type': 'application/json'}
-        response = requests.post(url, json=post_data, headers=headers)
-        response.encoding = 'utf-8'
+        response_dict = {
+                "您好": "你好，我是百度机器人。",
+                "你叫什么名字": "我是百度机器人。",
+                "今天天气如何": "抱歉，我无法提供天气信息。",
+                "如何购买机票": "点击购买机票按钮购买机票"
+        }       # 添加更多的键值对，根据需要进行回复
 
-        if response.status_code == 200:
-            # 响应成功，处理数据
-            response_text = response.text  # 获取响应数据（以字符串形式）
-            response_data = json.loads(response_text)  # 解析JSON字符串
-            message = response_data['result']['response_list'][0]['action_list'][0]['say']
-            return JsonResponse({
-                'code': 200,
-                'message': message
-            })
+
+        if query in response_dict:
+            return JsonResponse({'msg' : response_dict[query]})
         else:
-            # 响应失败，输出错误信息
-            print("Error:", response.status_code)
-            return JsonResponse({
-                'code': response.status_code,
-                'error': 'Error occurred during the request'
-            })
+            return JsonResponse({'msg' : '对不起，我无法理解您的请求。'})
+
 
 
 # 旅客注册功能
@@ -473,7 +465,13 @@ class BuyTicketsViews(View):
                                            destination=destination, origin=origin, status=status,
                                            airline_name=airline_name, terminal=terminal, gate=gate)
             ticket.save()
-
+        except Exception as e:
+            try:
+                ticket = Ticket.objects.get(passenger = old_passenger)
+            except Exception as e:
+                return JsonResponse({
+                    'code': 10405, 'error': '旅客只能买一张票！'
+                })
             return JsonResponse({'message': '购票成功，请支付',
                                  'ticket_no': ticket.ticket_number_random,
                                  'passenger': old_passenger.identification,
@@ -487,10 +485,7 @@ class BuyTicketsViews(View):
                                  'terminal': terminal.terminal_number,
                                  'gate': gate.gate_number})
 
-        except Exception as e:
-            return JsonResponse({
-                'message': str(e)
-            })
+
 
 
 # 查询航班信息
@@ -1155,8 +1150,13 @@ class PaymentStatusView(View):
                 'code': 11004,
                 'error': '机票不存在'
             })
-        ticket.status = "已支付"
-        ticket.save()
+        try:
+            ticket.status = "已支付"
+            ticket.save()
+        except Exception as e:
+            return JsonResponse({
+                'code': 0, 'errmsg': 'ok'
+            })
         return JsonResponse({'code': 0, 'errmsg': 'ok'})
 
 
@@ -1214,5 +1214,5 @@ class PaymentStatus2View(View):
             })
         parking.status = "空闲"
         parking.save()
-        return JsonResponse({'code': 0, 'errmsg': 'ok'})
+        return JsonResponse({'code': 0, 'errmsg': 'ok','money': need_money})
 
