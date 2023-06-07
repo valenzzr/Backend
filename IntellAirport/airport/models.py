@@ -3,6 +3,10 @@ from django.db import models
 # Create your models here.
 import random
 
+from django.db.models.signals import post_save, post_delete
+from django.dispatch import receiver
+from celery import current_app
+
 
 def generate_random_number():
     return str(random.randint(100000000, 999999999))
@@ -174,4 +178,10 @@ class Store(models.Model):
         unique_together = ('store_id', 'shop_id', 'store_name')
 
 
-
+# @receiver([post_save, post_delete], sender=Ticket)
+# def notify_database_change(sender, **kwargs):
+#     current_app.send_task('restart_celery_beat')
+#
+#
+# post_save.connect(notify_database_change, sender=Ticket)
+# post_delete.connect(notify_database_change, sender=Ticket)
