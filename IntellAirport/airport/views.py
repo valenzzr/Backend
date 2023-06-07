@@ -1122,7 +1122,6 @@ class PaymentStatusView(View):
         card_pwd = data.get('card_pwd')
         need_money = data.get('need_money')
         need_money = float(need_money)
-        
         ticket_no = data.get('ticket_no')
         flag = 0
         for i in credit_card:

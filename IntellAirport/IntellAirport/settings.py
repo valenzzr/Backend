@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "corsheaders",
+    "django_celery_beat",
     "django_apscheduler",
     "airport",
 ]
@@ -179,16 +180,9 @@ EMAIL_HOST_USER = '949011578@qq.com'
 # 此处的EMAIL_HOST_PASSWORD是用QQ邮箱授权码登录
 EMAIL_HOST_PASSWORD = 'pgsfaapdgdesbcea'
 # # 收件人看到的发件人
-# EMAIL_FROM = '152xxxx7756@sina.cn'
+# EMAIL_FROM = 'Iyang'
 #
 # SCHEDULER_AUTOSTART = True
-
-
-
-# CELERY_ENABLE_UTC = False
-# CELERY_TIMEZONE = "Asia/Shanghai"
-# CELERY_BROKER_URL = "redis://127.0.0.1:6379/1"
-# CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379/2"
 
 # 支付宝参数配置
 # 在支付宝开放平台的沙箱应用中获取APPID和支付宝网关

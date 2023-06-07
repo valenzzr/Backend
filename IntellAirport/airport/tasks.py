@@ -1,14 +1,15 @@
 from apscheduler.schedulers.background import BackgroundScheduler
-from celery import shared_task
+from celery import shared_task, current_app
+from subprocess import Popen, PIPE
 from django.conf import settings
 from django.core.mail import send_mail
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
 from django.http import JsonResponse
 from django.utils import timezone
 from django_apscheduler.jobstores import DjangoJobStore, register_job
 
 from .models import Flight, Ticket, Passenger
-
-email_send = False
 
 
 # @shared_task
@@ -60,22 +61,27 @@ def send_flight_reminder_email(ticket):
     airline_name = airline_names.get(airline_name_id, '未知航空公司')
 
     print(ticket.flight_number)
+    print('into_ok4')
     message = \
         f"""尊敬的乘客，{ticket.passenger.name}(先生/女士)：\n\t感谢您选择{airline_name}公司。我们提醒您，您的航班{ticket.flight_number.flight_number}将在两小时后起飞。为了确保您的旅行顺利进行，请您务必在起飞前两小时完成在线值机。通过在线值机，您可以选择座位、打印登机牌，并且节省排队的时间。请您访问我们的官方网站或使用我们的手机应用程序，点击值机选项，并按照提示完成值机流程。如果您需要任何帮助或有任何疑问，请随时联系我们的客户服务团队。再次感谢您选择我们的航空公司，祝您旅途愉快！\n最好的祝福，{airline_name}团队 
         """
 
     identification = ticket.passenger_id
-
+    print(message)
+    print(identification)
+    print('into_ok5')
     try:
-        passenger = Passenger.objects.get(passenger_id=identification)
+        passenger = Passenger.objects.get(identification=identification)
     except Exception as e:
         return JsonResponse({
             'code': 405,
             'error': '未找到该用户'
-            })
+        })
 
     passenger.message = message
     passenger.save()
+
+    print(ticket.passenger.email)
 
     # message = f'Dear {ticket.passenger.name}, your flight {ticket.flight_number} is departing in 2 hours.'
     from_email = '949011578@qq.com'
@@ -87,24 +93,48 @@ def send_flight_reminder_email(ticket):
 
 
 # 起飞前2小时定时给需要登机的旅客发送邮件
-# @shared_task
+@shared_task
 def check_flight_departure():
+    print('*************************************************')
     # global email_send
     flights = Flight.objects.all()
     print(flights)
     for flight in flights:
         time_difference = flight.departure_datetime - timezone.now()
         hours_remaining = time_difference.total_seconds()  # // 3600
-        print(flight.departure_datetime, timezone.now(), time_difference, hours_remaining, email_send)
-        if 7198 <= hours_remaining <= 7203 and not email_send:
+        print(flight.departure_datetime, timezone.now(), time_difference, hours_remaining)
+        print(111)
+        print("hours_remaining:%d" % hours_remaining)
+
+        if 7198 <= hours_remaining <= 7203:
+            print('into_ok1')
             # if hours_remaining == 2 and not email_send:
-            tickets = Ticket.objects.filter(flight_number=flight.flight_number)
+            tickets = Ticket.objects.filter(flight_number_id=flight.flight_number)
+            print('into_ok2')
+            print(222)
+            print(tickets)
             for ticket in tickets:
+                print('into_ok3')
+
                 send_flight_reminder_email(ticket)
+
             # email_send = True
             # break
+        print('***************************************************')
     return "Flight departure check completed"  # 添加返回值
 
+
+@shared_task
+def restart_celery_beat():
+    process = Popen(['pkill', '-f', 'celery beat'], stdout=PIPE, stderr=PIPE)
+    process.communicate()
+    process = Popen(['celery', '-A', 'IntellAirport', 'beat', '-l', 'info'], stdout=PIPE, stderr=PIPE)
+    process.communicate()
+
+
+@receiver([post_save, post_delete], sender=Ticket)
+def notify_database_change(sender, **kwargs):
+    restart_celery_beat()
 
 # 使用apscheduler实现的定时任务，感觉很难处理并发啊
 # try:
